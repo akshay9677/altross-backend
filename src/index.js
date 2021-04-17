@@ -1,9 +1,9 @@
-import express from "express"
-import bodyParser from "body-parser"
 import path from "path"
 require("dotenv").config({
-  path: path.resolve(__dirname + "/config/config.env"),
+  path: path.resolve(__dirname + "/config/.env"),
 })
+import express from "express"
+import bodyParser from "body-parser"
 import { connectDB } from "./config/db"
 import loginRoute from "./routes/auth/login.routes"
 import auth from "./config/auth"
@@ -12,7 +12,7 @@ connectDB(process.env.MONGO_MAIN_DB)
 
 const app = express()
 
-const routes = require("./main.routes")
+import routes from "./main.routes"
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))

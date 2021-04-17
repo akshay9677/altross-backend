@@ -18,7 +18,7 @@ class ModuleBase {
       let currModel = this.getCurrDBModel(orgid)
       let param = req.body
       let { page, perPage } = param
-      const totalCount = await this.getTotalCount()
+      const totalCount = await this.getTotalCount(currModel)
       let records = await currModel
         .find()
         .sort({ name: 1 })
@@ -49,9 +49,7 @@ class ModuleBase {
     }
   }
 
-  async getTotalCount() {
-    let { orgid } = req.headers
-    let currModel = this.getCurrDBModel(orgid)
+  async getTotalCount(currModel) {
     const totalCount = await currModel.countDocuments()
     return totalCount
   }
