@@ -24,7 +24,6 @@ class Connection {
       useUnifiedTopology: true,
       useFindAndModify: false,
     })
-    console.log(`New Connection is added `)
     this.connections.push({ db: dbName, orgId: orgId, connection: conn })
   }
 

@@ -1,18 +1,9 @@
 import { errorResponse } from "../../utils/responsehandler"
-import { isEmpty } from "../../utils/validation"
+import { isEmpty, getId } from "../../utils/validation"
 import LoginUser from "../../model/auth/LoginUser.model"
 import Organization from "../../model/auth/Organization.model"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-
-const getOrgId = async (companyname) => {
-  let userKey = companyname
-  let userUniqueNum = Array.from(userKey)
-    .map((letter) => letter.charCodeAt(0))
-    .reduce((current, previous) => previous + current)
-  let colorIndex = userUniqueNum % 999
-  return colorIndex
-}
 
 const login = async (req, res) => {
   try {
@@ -106,7 +97,7 @@ const signup = async (req, res) => {
     credentials.password = hashedPwd
 
     // generate org id and db name based on company name
-    let orgId = await getOrgId(companyname)
+    let orgId = await getId(companyname, 999)
     let dbName = credentials.companyname.replaceAll(" ", "_") + "_" + orgId
     credentials.orgId = orgId
     credentials.dbName = dbName
