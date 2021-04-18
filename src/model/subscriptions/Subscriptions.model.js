@@ -7,8 +7,9 @@ export const SubscriptionSchema = new mongoose.Schema(
     url: { type: String, displayName: "URL" },
     users: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Number,
         ref: "Users",
+        lookup: true,
       },
     ],
     owner: { type: String, required: true, displayName: "Owner" },

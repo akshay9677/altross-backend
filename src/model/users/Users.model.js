@@ -8,8 +8,9 @@ export const UserSchema = new mongoose.Schema({
   department: { type: String, displayName: "Department" },
   subscriptions: [
     {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Number,
       ref: "Subscriptions",
+      lookup: true,
     },
   ],
   usage: { type: String, displayName: "Usage" },

@@ -2,7 +2,6 @@ import { errorResponse } from "../utils/responsehandler"
 import { getModel } from "./getModel"
 import { isEmpty, getId } from "../utils/validation"
 import _ from "lodash"
-import mongoose from "mongoose"
 
 class ModuleBase {
   constructor(model, modelName, lookupHash) {
@@ -21,9 +20,10 @@ class ModuleBase {
       schema: { paths },
     } = currModel || {}
     let fields = Object.keys(paths).filter((field) => {
-      let { caster } = paths[field] || {}
-      let { instance } = caster || {}
-      return instance === "ObjectID"
+      let { options } = paths[field] || {}
+      let { type } = options || {}
+      let { lookup } = type[0] || {}
+      return lookup
     })
     return fields
   }
@@ -87,7 +87,7 @@ class ModuleBase {
           let { name, schema } = lookupHash[lookup]
           let currLookupModel = getModel(orgid, name, schema)
           let updatePromise = await currLookupModel.find({
-            _id: { $in: uniqueLookupIds[lookup] },
+            id: { $in: uniqueLookupIds[lookup] },
           })
           meta[lookup] = updatePromise
         }
@@ -160,7 +160,7 @@ class ModuleBase {
 
   async createLookupRecords(record, currModel, orgid) {
     let lookups = this.getModuleLookups(currModel)
-    let { _id } = record
+    let { id } = record
     let promise = []
     let { lookupHash } = this
     !isEmpty(lookups) &&
@@ -169,8 +169,8 @@ class ModuleBase {
           let { name, schema } = lookupHash[lookup]
           let currLookupModel = getModel(orgid, name, schema)
           let updatePromise = currLookupModel.updateMany(
-            { _id: { $in: record[lookup] } },
-            { $addToSet: { [this.modelName.toLowerCase()]: _id } }
+            { id: { $in: record[lookup] } },
+            { $addToSet: { [this.modelName.toLowerCase()]: id } }
           )
 
           promise.push(updatePromise)
@@ -186,7 +186,6 @@ class ModuleBase {
       let currModel = this.getCurrDBModel(orgid)
       let param = req.body
       let { id, data } = param
-
       let record = await currModel.findOneAndUpdate({ id: id }, data)
 
       await this.removeLookupRecords(record, data, currModel, orgid)
@@ -210,20 +209,20 @@ class ModuleBase {
     for (let lookup of lookups) {
       let oldRecordLookup = oldRecord[lookup]
       let newRecordLookup = newRecord[lookup]
-      let { _id } = oldRecord
+      let { id } = oldRecord
 
       if (
         !isEmpty(oldRecordLookup) &&
         oldRecordLookup.length > newRecordLookup.length
       ) {
-        let diff = _.difference(newRecordLookup, oldRecordLookup)
+        let diff = _.difference(oldRecordLookup, newRecordLookup)
         let { name, schema } = this.lookupHash[lookup]
         let currLookupModel = getModel(orgid, name, schema)
-        let updatePromise = await currLookupModel.findOne(
+        let updatePromise = await currLookupModel.updateMany(
           {
-            _id: { $in: diff },
+            id: { $in: diff },
           },
-          { $pull: { [this.modelName.toLowerCase()]: [_id] } }
+          { $pull: { [this.modelName.toLowerCase()]: id } }
         )
 
         promise.push(updatePromise)
@@ -240,12 +239,26 @@ class ModuleBase {
 
       await currModel.deleteMany({ id: { $in: id } })
 
+      this.removeDeletedLookupRecords(id, currModel, orgid)
+
       return res.status(200).json({
         data: "Deleted successfully",
         error: null,
       })
     } catch (error) {
       return res.status(500).json(errorResponse(error))
+    }
+  }
+
+  async removeDeletedLookupRecords(id, currModel, orgid) {
+    let lookups = this.getModuleLookups(currModel)
+    for (let lookup of lookups) {
+      let { name, schema } = this.lookupHash[lookup]
+      let currLookupModel = getModel(orgid, name, schema)
+      await currLookupModel.updateMany(
+        { [this.modelName.toLowerCase()]: { $in: id } },
+        { $pullAll: { [this.modelName.toLowerCase()]: id } }
+      )
     }
   }
 }
