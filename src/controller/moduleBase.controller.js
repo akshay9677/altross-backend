@@ -1,13 +1,15 @@
 import { errorResponse } from "../utils/responsehandler"
 import { getModel } from "./getModel"
 import { isEmpty, getId } from "../utils/validation"
+import { executeEventMiddleWare } from "./event-middleware/execute.middleware"
 import _ from "lodash"
 
 class ModuleBase {
-  constructor(model, modelName, lookupHash) {
+  constructor(model, modelName, lookupHash, moduleName) {
     this.model = model
     this.modelName = modelName
     this.lookupHash = lookupHash
+    this.moduleName = moduleName
   }
 
   getCurrDBModel(orgid) {
@@ -144,10 +146,13 @@ class ModuleBase {
       let { name } = param
       let totalCount = getId(name, 9999)
 
-      param = { ...param, id: totalCount + 1, test: "test" }
+      param = { ...param, id: totalCount + 1 }
 
       const record = await currModel.create(param)
       await this.createLookupRecords(record, currModel, orgid)
+
+      if (!isEmpty(record) && !isEmpty(this.moduleName))
+        executeEventMiddleWare(param, "create", this.moduleName, orgid)
 
       return res.status(200).json({
         data: record,

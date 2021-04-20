@@ -1,17 +1,18 @@
 import ModuleBase from "../moduleBase.controller"
-import { SubscriptionSchema } from "../../model/subscriptions/Subscriptions.model"
-import { UserSchema } from "../../model/users/Users.model"
+import { MODULES } from "../../utils/moduleSchemas"
 
 const LookupHash = {
-  users: {
-    name: "users",
-    schema: UserSchema,
-  },
+  users: { ...MODULES.users },
 }
 
 class Subscriptions extends ModuleBase {
   constructor() {
-    super(SubscriptionSchema, "Subscriptions", LookupHash)
+    super(
+      MODULES["subscriptions"].schema,
+      MODULES["subscriptions"].name,
+      LookupHash,
+      MODULES["subscriptions"].name
+    )
   }
 }
 
