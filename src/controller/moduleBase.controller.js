@@ -193,6 +193,17 @@ class ModuleBase {
       let { id, data } = param
       let record = await currModel.findOneAndUpdate({ id: id }, data)
 
+      if (isEmpty(record)) throw new Error("No record found for the given ID")
+
+      if (!isEmpty(this.moduleName)) {
+        executeEventMiddleWare(
+          { ...record._doc, ...data },
+          "update",
+          this.moduleName,
+          orgid
+        )
+      }
+
       await this.removeLookupRecords(record, data, currModel, orgid)
 
       let actualRecord = { ...record._doc, ...data }
@@ -218,6 +229,7 @@ class ModuleBase {
 
       if (
         !isEmpty(oldRecordLookup) &&
+        !isEmpty(newRecordLookup) &&
         oldRecordLookup.length > newRecordLookup.length
       ) {
         let diff = _.difference(oldRecordLookup, newRecordLookup)
@@ -241,6 +253,14 @@ class ModuleBase {
       let { orgid } = req.headers
       let currModel = this.getCurrDBModel(orgid)
       let { id } = req.body
+
+      let records = await currModel.find({ id: { $in: id } })
+
+      if (isEmpty(records))
+        throw new Error("No records were found for the given ID")
+
+      if (!isEmpty(this.moduleName))
+        executeEventMiddleWare(records, "delete", this.moduleName, orgid)
 
       await currModel.deleteMany({ id: { $in: id } })
 

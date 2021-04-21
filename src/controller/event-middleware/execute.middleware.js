@@ -1,5 +1,6 @@
 import { WorkflowSchema } from "../../model/workflows/workflow.model"
 import { WorkflowExecution } from "../workflows/workflow.execution"
+import { isEmpty } from "../../utils/validation"
 
 const AUTOMATION_MODULES = [
   {
@@ -11,6 +12,18 @@ const AUTOMATION_MODULES = [
 
 export const executeEventMiddleWare = (record, event, moduleName, orgid) => {
   AUTOMATION_MODULES.forEach((module) => {
-    module.action(record, event, moduleName, orgid, module)
+    if (Array.isArray(record)) {
+      record.forEach((currRecord) => {
+        module.action(
+          !isEmpty(currRecord._doc) ? currRecord._doc : currRecord,
+          event,
+          moduleName,
+          orgid,
+          module
+        )
+      })
+    } else {
+      module.action(record, event, moduleName, orgid, module)
+    }
   })
 }

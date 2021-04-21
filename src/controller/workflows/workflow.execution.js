@@ -89,41 +89,48 @@ export const WorkflowExecution = async (
   // find the workflow with module name, field type and name
   let moduleFieldMatchRecords = await workflowModel.find({
     moduleName: moduleName,
-    "conditions.field": { $in: Object.keys(record) },
+    "conditions.field": {
+      $in: Object.keys(record).filter((prop) => {
+        return prop !== "_id" || prop !== "__v"
+      }),
+    },
     event: event,
   })
 
   let actionExecutionArray = []
 
   moduleFieldMatchRecords.forEach((currRecord) => {
-    let { conditions, matchCondition, actions } = currRecord || []
-    let conditionsSatisfiedArray = conditions.map((condition) => {
-      let { field, operator, value } = condition || {}
-      let fieldObj = currModuleFields.find(
-        (currField) => currField.path === field
-      )
-      let { instance } = fieldObj
-      let operatorsSelected
+    let { conditions, matchCondition, actions, event: workflowEvent } =
+      currRecord || []
+    if (workflowEvent === event) {
+      let conditionsSatisfiedArray = conditions.map((condition) => {
+        let { field, operator, value } = condition || {}
+        let fieldObj = currModuleFields.find(
+          (currField) => currField.path === field
+        )
+        let { instance } = fieldObj
+        let operatorsSelected
 
-      if (
-        !isEmpty(OPERATOR_HASH[instance]) &&
-        !isEmpty((OPERATOR_HASH[instance] || {})[operator])
-      )
-        operatorsSelected = OPERATOR_HASH[instance][operator]
+        if (
+          !isEmpty(OPERATOR_HASH[instance]) &&
+          !isEmpty((OPERATOR_HASH[instance] || {})[operator])
+        )
+          operatorsSelected = OPERATOR_HASH[instance][operator]
 
-      if (!isEmpty(operatorsSelected) && !isEmpty(record[field])) {
-        return operatorsSelected.action(record[field], value)
-      } else {
-        return false
+        if (!isEmpty(operatorsSelected) && !isEmpty(record[field])) {
+          return operatorsSelected.action(record[field], value)
+        } else {
+          return false
+        }
+      })
+
+      if (matchCondition === "or") {
+        let canExecuteAction = conditionsSatisfiedArray.some((value) => value)
+        if (canExecuteAction) actionExecutionArray.push(...actions)
+      } else if (matchCondition === "and") {
+        let canExecuteAction = conditionsSatisfiedArray.every((value) => value)
+        if (canExecuteAction) actionExecutionArray.push(...actions)
       }
-    })
-
-    if (matchCondition === "or") {
-      let canExecuteAction = conditionsSatisfiedArray.some((value) => value)
-      if (canExecuteAction) actionExecutionArray.push(...actions)
-    } else if (matchCondition === "and") {
-      let canExecuteAction = conditionsSatisfiedArray.every((value) => value)
-      if (canExecuteAction) actionExecutionArray.push(...actions)
     }
   })
   console.log(actionExecutionArray)
