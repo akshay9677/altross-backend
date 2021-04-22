@@ -30,6 +30,14 @@ const OPERATOR_HASH = {
       action: (recordValue, conditionValue) =>
         recordValue < conditionValue || recordValue === conditionValue,
     },
+    16: {
+      name: "empty",
+      action: (recordValue) => isEmpty(recordValue),
+    },
+    17: {
+      name: "notempty",
+      action: (recordValue) => !isEmpty(recordValue),
+    },
   },
   String: {
     20: {
@@ -59,6 +67,32 @@ const OPERATOR_HASH = {
       name: "endswith",
       action: (recordValue, conditionValue) =>
         recordValue.endsWith(conditionValue),
+    },
+    26: {
+      name: "empty",
+      action: (recordValue) => isEmpty(recordValue),
+    },
+    27: {
+      name: "notempty",
+      action: (recordValue) => !isEmpty(recordValue),
+    },
+  },
+  Boolean: {
+    30: {
+      name: "empty",
+      action: (recordValue) => isEmpty(recordValue),
+    },
+    31: {
+      name: "notempty",
+      action: (recordValue) => !isEmpty(recordValue),
+    },
+    32: {
+      name: "true",
+      action: (recordValue) => recordValue,
+    },
+    33: {
+      name: "false",
+      action: (recordValue) => !recordValue,
     },
   },
 }
@@ -90,7 +124,7 @@ export const WorkflowExecution = async (
   let moduleFieldMatchRecords = await workflowModel.find({
     moduleName: moduleName,
     "conditions.field": {
-      $in: Object.keys(record).filter((prop) => {
+      $in: Object.keys(paths).filter((prop) => {
         return prop !== "_id" || prop !== "__v"
       }),
     },
@@ -117,7 +151,7 @@ export const WorkflowExecution = async (
         )
           operatorsSelected = OPERATOR_HASH[instance][operator]
 
-        if (!isEmpty(operatorsSelected) && !isEmpty(record[field])) {
+        if (!isEmpty(operatorsSelected)) {
           return operatorsSelected.action(record[field], value)
         } else {
           return false
