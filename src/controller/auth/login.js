@@ -17,7 +17,6 @@ const login = async (req, res) => {
     if (hashComparision) {
       const userDetails = { email: email }
       const accessToken = jwt.sign(userDetails, process.env.ACCESS_TOKEN)
-
       if (isEmpty(user.token)) {
         user.token = accessToken
 
@@ -41,15 +40,25 @@ const login = async (req, res) => {
           error: null,
         })
       } else {
-        return res
-          .status(202)
-          .json(errorResponse(new Error("User already logged in")))
+        let { firstname, lastname, companyname, token } = user
+        return res.status(200).json({
+          data: {
+            message: "User logged in successfully",
+            token: token,
+            orgId: user.orgId,
+            email: email,
+            firstname: firstname,
+            lastname: lastname,
+            company: companyname,
+          },
+          error: null,
+        })
       }
     } else {
       throw new Error("Incorrect password")
     }
   } catch (error) {
-    return res.status(500).json(errorResponse(error))
+    return res.status(200).json(errorResponse(error))
   }
 }
 
@@ -127,4 +136,15 @@ const signup = async (req, res) => {
   }
 }
 
-export { login, signup, logout }
+const getAccount = async (req, res) => {
+  try {
+    let { token, orgId } = req.body
+    let user = await LoginUser.findOne({ orgId, token })
+
+    return res.status(200).json({ data: user, error: null })
+  } catch (e) {
+    return res.status(500).json(errorResponse(error))
+  }
+}
+
+export { login, signup, logout, getAccount }

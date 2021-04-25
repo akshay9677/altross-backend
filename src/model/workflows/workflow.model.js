@@ -13,6 +13,11 @@ export const WorkflowSchema = new mongoose.Schema({
   ],
   matchCondition: { type: String, enum: ["and", "or"], required: true },
   event: { type: String, enum: ["create", "update", "delete"] },
-  actions: [{ type: String }],
+  actions: [
+    {
+      actionType: { type: Number, required: true },
+      actionDetails: { type: Object, required: true },
+    },
+  ],
   moduleName: { type: String, required: true },
 })

@@ -7,6 +7,7 @@ import bodyParser from "body-parser"
 import { connectDB } from "./config/db"
 import loginRoute from "./routes/auth/login.routes"
 import auth from "./config/auth"
+import cors from "cors"
 
 connectDB(process.env.MONGO_MAIN_DB)
 
@@ -14,6 +15,7 @@ const app = express()
 
 import routes from "./main.routes"
 
+app.use(cors())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 

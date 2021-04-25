@@ -51,7 +51,7 @@ class ModuleBase {
           .skip(Math.abs(perPage * page))
           .limit(perPage)
       }
-      totalCount = records.length
+      totalCount = await currModel.countDocuments()
 
       let meta = await this.getModuleLookupsList(records, currModel, orgid)
 
@@ -62,7 +62,7 @@ class ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(500).json(errorResponse(error))
+      return res.status(200).json(errorResponse(error))
     }
   }
 
@@ -111,7 +111,7 @@ class ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(500).json(errorResponse(error))
+      return res.status(200).json(errorResponse(error))
     }
   }
 
@@ -123,10 +123,10 @@ class ModuleBase {
         schema: { paths },
       } = currModel || {}
       let fields = Object.keys(paths)
-        .filter((field) => field !== "__v")
+        .filter((field) => !["__v", "_id"].includes(field))
         .map((field) => {
-          let { path, options } = paths[field] || {}
-          return { name: path, ...options }
+          let { path, options, instance } = paths[field] || {}
+          return { name: path, ...options, type: instance }
         })
 
       return res.status(200).json({
@@ -134,7 +134,7 @@ class ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(500).json(errorResponse(error))
+      return res.status(200).json(errorResponse(error))
     }
   }
 
@@ -159,7 +159,7 @@ class ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(500).json(errorResponse(error))
+      return res.status(200).json(errorResponse(error))
     }
   }
 
@@ -214,7 +214,7 @@ class ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(500).json(errorResponse(error))
+      return res.status(200).json(errorResponse(error))
     }
   }
 
@@ -271,7 +271,7 @@ class ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(500).json(errorResponse(error))
+      return res.status(200).json(errorResponse(error))
     }
   }
 

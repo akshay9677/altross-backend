@@ -1,6 +1,7 @@
 import { isEmpty } from "../../utils/validation"
 import { getModel } from "../getModel"
 import { MODULES } from "../../utils/moduleSchemas"
+import ACTIONS_HASH from "../automation-actions/automation.actions"
 
 const OPERATOR_HASH = {
   Number: {
@@ -167,5 +168,12 @@ export const WorkflowExecution = async (
       }
     }
   })
-  console.log(actionExecutionArray)
+  actionExecutionArray.forEach((action) => {
+    let { actionType } = action
+    if (!isEmpty(ACTIONS_HASH[actionType])) {
+      let currAction = ACTIONS_HASH[actionType]
+      currAction(record, currModel, action)
+    }
+    console.log(actionType)
+  })
 }
