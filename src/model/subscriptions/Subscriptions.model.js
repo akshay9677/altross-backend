@@ -9,8 +9,13 @@ export const SubscriptionSchema = new mongoose.Schema(
       displayName: "Id",
       displayType: "ID",
     },
-    name: { type: String, required: true, unique: 1, displayName: "Name" },
-    url: { type: String, displayName: "URL", displayType: "LINK" },
+    name: {
+      type: String,
+      required: true,
+      unique: 1,
+      displayName: "Name",
+      displayType: "STRING",
+    },
     users: [
       {
         type: Number,
@@ -24,10 +29,37 @@ export const SubscriptionSchema = new mongoose.Schema(
       displayName: "Owner",
       displayType: "USER",
     },
-    department: { type: String, displayName: "Department" },
-    state: { type: String, displayName: "State" },
-    expenses: { type: Number, displayName: "Expenses" },
-    usage: { type: String, displayName: "Usage" },
+    department: {
+      type: String,
+      displayName: "Department",
+      displayType: "ENUM",
+      options: [
+        "Customer Support",
+        "Development",
+        "Finance",
+        "HR",
+        "IT",
+        "Operation",
+        "Sales",
+        "Marketing",
+      ],
+    },
+    state: { type: String, displayName: "State", displayType: "STRING" },
+    expenses: {
+      type: Number,
+      displayName: "Expenses",
+      displayType: "NUMBER",
+      unit: "Dollars",
+      metric: "$",
+    },
+    usage: {
+      type: String,
+      displayName: "Usage",
+      displayType: "NUMBER",
+      unit: "Percentage",
+      metric: "%",
+    },
+    url: { type: String, displayName: "URL", displayType: "LINK" },
   },
   { strict: false }
 )
