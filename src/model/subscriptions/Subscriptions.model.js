@@ -8,6 +8,7 @@ export const SubscriptionSchema = new mongoose.Schema(
       unique: 1,
       displayName: "Id",
       displayType: "ID",
+      id: 1,
     },
     name: {
       type: String,
@@ -15,6 +16,7 @@ export const SubscriptionSchema = new mongoose.Schema(
       unique: 1,
       displayName: "Name",
       displayType: "STRING",
+      id: 2,
     },
     users: [
       {
@@ -28,6 +30,7 @@ export const SubscriptionSchema = new mongoose.Schema(
       required: true,
       displayName: "Owner",
       displayType: "USER",
+      id: 3,
     },
     department: {
       type: String,
@@ -43,6 +46,7 @@ export const SubscriptionSchema = new mongoose.Schema(
         { label: "Sales", value: "Sales" },
         { label: "Marketing", value: "Marketing" },
       ],
+      id: 4,
     },
     state: { type: String, displayName: "State", displayType: "STRING" },
     expenses: {
@@ -51,6 +55,7 @@ export const SubscriptionSchema = new mongoose.Schema(
       displayType: "NUMBER",
       unit: "Dollars",
       metric: "$",
+      id: 5,
     },
     usage: {
       type: String,
@@ -58,8 +63,9 @@ export const SubscriptionSchema = new mongoose.Schema(
       displayType: "NUMBER",
       unit: "Percentage",
       metric: "%",
+      id: 6,
     },
-    url: { type: String, displayName: "URL", displayType: "LINK" },
+    url: { type: String, displayName: "URL", displayType: "LINK", id: 7 },
   },
   { strict: false }
 )
