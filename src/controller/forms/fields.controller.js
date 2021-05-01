@@ -26,14 +26,14 @@ class Fields extends ModuleBase {
 
       let { paths } = MODULES[moduleName].schema
       let fields = Object.keys(paths)
-        .filter((field) => !["__v", "_id"].includes(field))
+        .filter((field) => !["__v", "_id", "id"].includes(field))
         .map((field) => {
           let { path, options, instance } = paths[field] || {}
           return { name: path, ...options, type: instance, mainField: true }
         })
 
       return res.status(200).json({
-        data: [...records, ...fields],
+        data: [...fields, ...records],
         error: null,
       })
     } catch (error) {

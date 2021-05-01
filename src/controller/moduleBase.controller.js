@@ -106,6 +106,8 @@ class ModuleBase {
       let { id } = req.body
       let record = await currModel.findOne({ id: id })
 
+      if (isEmpty(record)) throw new Error("No record found for that Id")
+
       return res.status(200).json({
         data: record,
         error: null,

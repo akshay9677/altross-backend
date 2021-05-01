@@ -3,6 +3,7 @@ import { MODULES, OTHER_MODULES } from "../../utils/moduleSchemas"
 import { errorResponse } from "../../utils/responsehandler"
 import { getModel } from "../getModel"
 import { isEmpty } from "../../utils/validation"
+import mongoose from "mongoose"
 
 class Forms extends ModuleBase {
   constructor() {
@@ -12,21 +13,12 @@ class Forms extends ModuleBase {
       OTHER_MODULES["forms"].name
     )
   }
-  defaultForm(moduleName) {
-    let { paths } = MODULES[moduleName].schema || {}
-    let moduleFields = Object.keys(paths)
-      .filter((field) => !["__v", "_id"].includes(field))
-      .map((field) => {
-        let { path, options, instance } = paths[field] || {}
-        return { name: path, ...options, type: instance }
-      })
-    let form = {
-      name: "Default",
-      displayName: "Default",
-      id: 1,
-      moduleName,
-      groups: [{ fields: moduleFields }],
-    }
+  async defaultForm(moduleName, orgid) {
+    let defaultFormSchema = mongoose.model(
+      OTHER_MODULES["forms"].name,
+      OTHER_MODULES["forms"].schema
+    )
+    let form = await defaultFormSchema.findOne({ moduleName })
     return form
   }
   async getModuleRecord(req, res) {
@@ -34,53 +26,17 @@ class Forms extends ModuleBase {
       let { orgid } = req.headers
       let currModel = this.getCurrDBModel(orgid)
       let { id, moduleName } = req.body
-      let record = await currModel.findOne({ id: id, moduleName })
-      let finalFields = []
+      let record
 
       if (!isEmpty(record) || !isEmpty(id)) {
-        let { groups } = record || {}
-        let fieldIds = []
-        groups.forEach((group) => {
-          let { fields } = group || {}
-          fields.forEach((field) => {
-            fieldIds.push(field)
-          })
-        })
-
-        let fieldsModel = getModel(
-          orgid,
-          OTHER_MODULES["fields"].name,
-          OTHER_MODULES["fields"].schema
-        )
-
-        let dbFields = await fieldsModel.find({
-          id: { $in: fieldIds },
-          moduleName,
-        })
-
-        let { paths } = MODULES[moduleName].schema || {}
-        let moduleFields = Object.keys(paths)
-          .filter((field) => !["__v", "_id"].includes(field))
-          .map((field) => {
-            let { path, options, instance } = paths[field] || {}
-            return { name: path, ...options, type: instance }
-          })
-        finalFields = [...moduleFields, ...dbFields]
-
-        groups = groups.map((group) => {
-          let { fields } = group || {}
-          return {
-            fields: fields.map((field) =>
-              finalFields.find((currField) => currField.id === field)
-            ),
-          }
-        })
-        record.groups = groups
+        record = await currModel.findOne({ id: id, moduleName })
       } else if (isEmpty(moduleName)) {
         throw new Error("Module name is required")
       } else if (isEmpty(id)) {
-        record = this.defaultForm(moduleName)
+        record = await this.defaultForm(moduleName, orgid)
       }
+
+      record.groups = await this.spreadFieldsInForm(record, moduleName, orgid)
 
       return res.status(200).json({
         data: record,
@@ -105,8 +61,8 @@ class Forms extends ModuleBase {
         .limit(perPage)
 
       totalCount = await currModel.countDocuments()
-
-      records.push(this.defaultForm(moduleName))
+      let defaultFormObject = await this.defaultForm(moduleName, orgid)
+      records.push(defaultFormObject)
 
       return res.status(200).json({
         data: records,
@@ -116,6 +72,50 @@ class Forms extends ModuleBase {
     } catch (error) {
       return res.status(200).json(errorResponse(error))
     }
+  }
+  async spreadFieldsInForm(record, moduleName, orgid) {
+    let { groups } = record || {}
+    let fieldIds = []
+    groups.forEach((group) => {
+      let { fields } = group || {}
+      fields.forEach((field) => {
+        fieldIds.push(field.id)
+      })
+    })
+
+    let fieldsModel = getModel(
+      orgid,
+      OTHER_MODULES["fields"].name,
+      OTHER_MODULES["fields"].schema
+    )
+
+    let dbFields = await fieldsModel.find({
+      id: { $in: fieldIds },
+      moduleName,
+    })
+
+    let { paths } = MODULES[moduleName].schema || {}
+    let moduleFields = Object.keys(paths)
+      .filter((field) => !["__v", "_id", "id"].includes(field))
+      .map((field) => {
+        let { path, options, instance } = paths[field] || {}
+        return { name: path, ...options, type: instance }
+      })
+    let finalFields = [...moduleFields, ...dbFields]
+
+    let finalGroups = groups.map((group) => {
+      let { fields } = group || {}
+      return {
+        fields: fields.map((field) => {
+          return {
+            ...field.toObject(),
+            ...finalFields.find((currField) => currField.id === field.id),
+          }
+        }),
+      }
+    })
+
+    return finalGroups
   }
 }
 

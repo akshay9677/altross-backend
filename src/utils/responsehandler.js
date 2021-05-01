@@ -1,6 +1,6 @@
 export const errorResponse = (error) => {
   return {
-    error: error.message,
+    error: { message: error.message },
     stackTrace: error.stack,
     data: null,
   }
