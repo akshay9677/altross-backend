@@ -9,10 +9,12 @@ exports.isEmpty = (value) => {
 }
 
 exports.getId = (value, max) => {
-  let userKey = value
-  let userUniqueNum = Array.from(userKey)
-    .map((letter) => letter.charCodeAt(0))
-    .reduce((current, previous) => previous + current)
-  let colorIndex = userUniqueNum % max
-  return colorIndex
+  if (value) {
+    let userKey = value
+    let userUniqueNum = Array.from(userKey)
+      .map((letter) => letter.charCodeAt(0))
+      .reduce((current, previous) => previous + current)
+    let colorIndex = userUniqueNum % max
+    return colorIndex
+  }
 }

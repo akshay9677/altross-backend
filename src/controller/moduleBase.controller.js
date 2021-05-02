@@ -35,19 +35,19 @@ class ModuleBase {
       let { orgid } = req.headers
       let currModel = this.getCurrDBModel(orgid)
       let param = req.body
-      let { page, perPage, filter } = param
+      let { page, perPage, filter, sort } = param
       let totalCount, records
 
       if (isEmpty(filter)) {
         records = await currModel
           .find()
-          .sort({ name: 1 })
+          .sort(sort)
           .skip(Math.abs(perPage * page))
           .limit(perPage)
       } else {
         records = await currModel
           .find(filter)
-          .sort({ name: 1 })
+          .sort(sort)
           .skip(Math.abs(perPage * page))
           .limit(perPage)
       }
