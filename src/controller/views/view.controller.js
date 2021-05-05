@@ -25,15 +25,19 @@ class Views extends ModuleBase {
     try {
       let { orgid } = req.headers
       let currModel = this.getCurrDBModel(orgid)
-      let { id, moduleName } = req.body
+      let { id, moduleName, viewname } = req.body
       let record
 
       if (isEmpty(moduleName)) {
         throw new Error("Module name is required")
-      } else if (isEmpty(id)) {
+      } else if (isEmpty(id) && isEmpty(viewname)) {
         record = await this.defaultView(moduleName)
       } else {
-        record = await currModel.findOne({ id: id, moduleName })
+        if (id) record = await currModel.findOne({ id: id, moduleName })
+        else if (viewname)
+          record = await currModel.findOne({ name: viewname, moduleName })
+
+        if (isEmpty(record)) record = await this.defaultView(moduleName)
       }
 
       if (isEmpty(record)) {
@@ -93,7 +97,7 @@ class Views extends ModuleBase {
 
     let { paths } = MODULES[moduleName].schema || {}
     let moduleFields = Object.keys(paths)
-      .filter((field) => !["__v", "_id", "id"].includes(field))
+      .filter((field) => !["__v", "_id"].includes(field))
       .map((field) => {
         let { path, options, instance } = paths[field] || {}
         return { name: path, ...options, type: instance }
