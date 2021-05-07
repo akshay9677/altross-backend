@@ -280,7 +280,7 @@ class ModuleBase {
   async removeDeletedLookupRecords(id, currModel, orgid) {
     let lookups = this.getModuleLookups(currModel)
     for (let lookup of lookups) {
-      let { name, schema } = this.lookupHash[lookup]
+      let { name, schema } = this.lookupHash[lookup] || {}
       let currLookupModel = getModel(orgid, name, schema)
       await currLookupModel.updateMany(
         { [this.modelName.toLowerCase()]: { $in: id } },
