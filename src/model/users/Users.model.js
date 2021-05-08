@@ -16,7 +16,14 @@ export const UserSchema = new mongoose.Schema({
     displayType: "TEXT_AREA",
     id: 2,
   },
-  id: { type: Number, required: true, unique: 1, displayName: "Id" },
+  id: {
+    type: Number,
+    required: true,
+    unique: 1,
+    displayName: "Id",
+    displayType: "ID",
+    id: 0,
+  },
   email: {
     type: String,
     required: true,

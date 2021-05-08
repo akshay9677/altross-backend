@@ -13,6 +13,10 @@ class Views extends ModuleBase {
       OTHER_MODULES["views"].name
     )
   }
+  getFieldForId(param) {
+    let { name, moduleName } = param
+    return name + moduleName
+  }
   async defaultView(moduleName) {
     let defaultViewsSchema = mongoose.model(
       OTHER_MODULES["views"].name,
@@ -104,9 +108,10 @@ class Views extends ModuleBase {
       })
     let finalFields = [...moduleFields, ...dbFields]
 
-    let filteredFields = finalFields.filter((field) =>
-      fieldIds.includes(field.id)
-    )
+    let filteredFields = fieldIds.map((field) => {
+      let currField = finalFields.find((finalField) => finalField.id === field)
+      return currField
+    })
 
     return filteredFields
   }

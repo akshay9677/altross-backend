@@ -16,6 +16,10 @@ class ModuleBase {
     let currModel = getModel(orgid, this.modelName, this.model)
     return currModel
   }
+  getFieldForId(param) {
+    let { name } = param
+    return name
+  }
 
   getModuleLookups(currModel) {
     let {
@@ -145,8 +149,7 @@ class ModuleBase {
       let { orgid } = req.headers
       let currModel = this.getCurrDBModel(orgid)
       let param = req.body
-      let { name } = param
-      let totalCount = getId(name, 9999)
+      let totalCount = getId(this.getFieldForId(param), 9999)
 
       param = { ...param, id: totalCount + 1 }
 
@@ -235,16 +238,18 @@ class ModuleBase {
         oldRecordLookup.length > newRecordLookup.length
       ) {
         let diff = _.difference(oldRecordLookup, newRecordLookup)
-        let { name, schema } = this.lookupHash[lookup]
-        let currLookupModel = getModel(orgid, name, schema)
-        let updatePromise = await currLookupModel.updateMany(
-          {
-            id: { $in: diff },
-          },
-          { $pull: { [this.modelName.toLowerCase()]: id } }
-        )
+        let { name, schema } = this.lookupHash[lookup] || {}
+        if (this.lookupHash[lookup]) {
+          let currLookupModel = getModel(orgid, name, schema)
+          let updatePromise = await currLookupModel.updateMany(
+            {
+              id: { $in: diff },
+            },
+            { $pull: { [this.modelName.toLowerCase()]: id } }
+          )
 
-        promise.push(updatePromise)
+          promise.push(updatePromise)
+        }
       }
     }
     return Promise.all(promise)
@@ -281,11 +286,13 @@ class ModuleBase {
     let lookups = this.getModuleLookups(currModel)
     for (let lookup of lookups) {
       let { name, schema } = this.lookupHash[lookup] || {}
-      let currLookupModel = getModel(orgid, name, schema)
-      await currLookupModel.updateMany(
-        { [this.modelName.toLowerCase()]: { $in: id } },
-        { $pullAll: { [this.modelName.toLowerCase()]: id } }
-      )
+      if (this.lookupHash[lookup]) {
+        let currLookupModel = getModel(orgid, name, schema)
+        await currLookupModel.updateMany(
+          { [this.modelName.toLowerCase()]: { $in: id } },
+          { $pullAll: { [this.modelName.toLowerCase()]: id } }
+        )
+      }
     }
   }
 }

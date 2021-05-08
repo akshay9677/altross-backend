@@ -142,7 +142,7 @@ const getAccount = async (req, res) => {
     let user = await LoginUser.findOne({ orgId, token })
 
     return res.status(200).json({ data: user, error: null })
-  } catch (e) {
+  } catch (error) {
     return res.status(500).json(errorResponse(error))
   }
 }

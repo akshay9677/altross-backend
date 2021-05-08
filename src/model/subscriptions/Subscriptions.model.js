@@ -55,7 +55,12 @@ export const SubscriptionSchema = new mongoose.Schema(
       ],
       id: 5,
     },
-    state: { type: String, displayName: "State", displayType: "STRING" },
+    state: {
+      type: String,
+      displayName: "State",
+      displayType: "STRING",
+      id: 11,
+    },
     expenses: {
       type: Number,
       displayName: "Expenses",
