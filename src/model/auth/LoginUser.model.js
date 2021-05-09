@@ -9,6 +9,12 @@ const Users = new mongoose.Schema({
   token: { type: String },
   orgId: { type: Number, required: true },
   dbName: { type: String, required: true },
+  avatar: {
+    data: Buffer,
+    contentType: String,
+  },
+  timezone: { type: String },
+  language: { type: String },
 })
 
 export default mongoose.model("Users", Users)
