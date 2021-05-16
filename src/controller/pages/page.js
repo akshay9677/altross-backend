@@ -20,10 +20,11 @@ Page.Tab = class {
 }
 
 Page.Widget = class {
-  constructor(name, width, height) {
+  constructor(name, width, height, params) {
     this.name = name
     this.width = width || "100%"
     this.height = height || "200px"
+    this.params = params || {}
   }
 }
 
