@@ -8,10 +8,10 @@ export const UserSchema = new mongoose.Schema({
     displayName: "Name",
     displayType: "USER",
     id: 1,
+    primaryField: true,
   },
   description: {
     type: String,
-    unique: 1,
     displayName: "Description",
     displayType: "TEXT_AREA",
     id: 2,
@@ -23,6 +23,7 @@ export const UserSchema = new mongoose.Schema({
     displayName: "Id",
     displayType: "ID",
     id: 0,
+    primaryField: true,
   },
   email: {
     type: String,

@@ -8,6 +8,7 @@ export const SubscriptionSchema = new mongoose.Schema(
       unique: 1,
       displayName: "Id",
       displayType: "ID",
+      primaryField: true,
       id: 1,
     },
     name: {
@@ -16,11 +17,11 @@ export const SubscriptionSchema = new mongoose.Schema(
       unique: 1,
       displayName: "Name",
       displayType: "STRING",
+      primaryField: true,
       id: 2,
     },
     description: {
       type: String,
-      unique: 1,
       displayName: "Description",
       displayType: "TEXT_AREA",
       id: 3,
@@ -91,6 +92,9 @@ export const SubscriptionSchema = new mongoose.Schema(
       displayName: "Tags",
       displayType: "TAG",
       id: 10,
+    },
+    notes: {
+      type: Array,
     },
   },
   { strict: false }

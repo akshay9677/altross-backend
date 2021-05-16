@@ -1,7 +1,5 @@
 import mongoose from "mongoose"
 
-const FieldSchema = new mongoose.Schema({})
-
 export const FormSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, unique: 1 },

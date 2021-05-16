@@ -9,9 +9,10 @@ const login = async (req, res) => {
   try {
     let { email, password } = req.body || {}
     let user = await LoginUser.findOne({ email: email })
-    if (isEmpty(email) || isEmpty(password) || isEmpty(user)) {
-      throw new Error("Error Occured")
+    if (isEmpty(email) || isEmpty(password)) {
+      throw new Error("Email and password required")
     }
+    if (isEmpty(user)) throw new Error("Incorrect email id")
 
     let hashComparision = await bcrypt.compare(password, user.password)
     if (hashComparision) {
@@ -147,4 +148,17 @@ const getAccount = async (req, res) => {
   }
 }
 
-export { login, signup, logout, getAccount }
+const updateAccount = async (req, res) => {
+  try {
+    let { _id, data } = req.body
+    await LoginUser.findOneAndUpdate({ _id: _id }, data)
+
+    return res
+      .status(200)
+      .json({ data: { message: "User updated successfully" }, error: null })
+  } catch (error) {
+    return res.status(500).json(errorResponse(error))
+  }
+}
+
+export { login, signup, logout, getAccount, updateAccount }
