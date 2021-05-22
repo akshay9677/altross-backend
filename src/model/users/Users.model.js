@@ -52,7 +52,6 @@ export const UserSchema = new mongoose.Schema({
   subscriptions: [
     {
       type: Number,
-      ref: "Subscriptions",
       lookup: true,
     },
   ],

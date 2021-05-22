@@ -21,14 +21,13 @@ class ModuleBase {
     return name
   }
 
-  getModuleLookups(currModel) {
+  getMultiLookups(currModel) {
     let {
       schema: { paths },
     } = currModel || {}
     let fields = Object.keys(paths).filter((field) => {
       let { options } = paths[field] || {}
-      let { type } = options || {}
-      let { lookup } = type[0] || {}
+      let { lookup } = options || {}
       return lookup
     })
     return fields
@@ -71,7 +70,7 @@ class ModuleBase {
   }
 
   async getModuleLookupsList(records, currModel, orgid) {
-    let lookups = this.getModuleLookups(currModel)
+    let lookups = this.getMultiLookups(currModel)
     let meta = {}
     let { lookupHash } = this
     let uniqueLookupIds = {}
@@ -88,8 +87,8 @@ class ModuleBase {
           }
         })
         uniqueLookupIds[lookup] = Array.from(uniqueLookupIds[lookup])
-
-        if (!isEmpty(lookupHash[lookup])) {
+        let { preFill } = lookupHash[lookup] || {}
+        if (!isEmpty(lookupHash[lookup]) && preFill) {
           let { name, schema } = lookupHash[lookup]
           let currLookupModel = getModel(orgid, name, schema)
           let updatePromise = await currLookupModel.find({
@@ -169,7 +168,7 @@ class ModuleBase {
   }
 
   async createLookupRecords(record, currModel, orgid) {
-    let lookups = this.getModuleLookups(currModel)
+    let lookups = this.getMultiLookups(currModel)
     let { id } = record
     let promise = []
     let { lookupHash } = this
@@ -224,7 +223,7 @@ class ModuleBase {
   }
 
   async removeLookupRecords(oldRecord, newRecord, currModel, orgid) {
-    let lookups = this.getModuleLookups(currModel)
+    let lookups = this.getMultiLookups(currModel)
     let promise = []
 
     for (let lookup of lookups) {
@@ -283,7 +282,7 @@ class ModuleBase {
   }
 
   async removeDeletedLookupRecords(id, currModel, orgid) {
-    let lookups = this.getModuleLookups(currModel)
+    let lookups = this.getMultiLookups(currModel)
     for (let lookup of lookups) {
       let { name, schema } = this.lookupHash[lookup] || {}
       if (this.lookupHash[lookup]) {

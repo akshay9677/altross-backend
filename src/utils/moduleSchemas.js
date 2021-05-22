@@ -1,17 +1,27 @@
-import { SubscriptionSchema } from "../model/subscriptions/Subscriptions.model"
-import { UserSchema } from "../model/users/Users.model"
 import { FormSchema } from "../model/forms/forms.model"
 import { FieldSchema } from "../model/forms/fields.model"
 import { ViewsSchema } from "../model/views/views.model"
+import { ProjectSchema } from "../model/projects.model"
+import { OrgSchema } from "../model/orgs.model"
+import { UsersSchema } from "../model/users.model"
+import { FeaturesModel } from "../model/features.model"
 
 export const MODULES = {
-  subscriptions: {
-    name: "subscriptions",
-    schema: SubscriptionSchema,
+  projects: {
+    name: "projects",
+    schema: ProjectSchema,
+  },
+  orgs: {
+    name: "orgs",
+    schema: OrgSchema,
   },
   users: {
     name: "users",
-    schema: UserSchema,
+    schema: UsersSchema,
+  },
+  features: {
+    name: "features",
+    schema: FeaturesModel,
   },
 }
 
