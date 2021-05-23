@@ -17,7 +17,7 @@ export const UsersSchema = new mongoose.Schema({
     id: 3,
     displayName: "User Id",
   },
-  orgs: { type: Array, id: 4, lookup: true, displayName: "Organizations" },
+  orgs: { type: Array, id: 4, lookup: true, displayName: "Organization" },
   features: { type: Array, id: 5, lookup: true, displayName: "Features" },
   projects: { type: Array, id: 6, lookup: true },
 })
