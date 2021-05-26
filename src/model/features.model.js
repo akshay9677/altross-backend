@@ -17,6 +17,5 @@ export const FeaturesModel = new mongoose.Schema({
     id: 3,
     displayName: "Feature Id",
   },
-  users: { type: Array, id: 4, lookup: true, displayName: "Users" },
-  projects: { type: Array, id: 5, lookup: true },
+  projects: { type: Array, id: 4, lookup: true },
 })

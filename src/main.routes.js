@@ -12,6 +12,7 @@ import projects from "./routes/projects.routes"
 import orgs from "./routes/orgs.routes"
 import users from "./routes/users.routes"
 import features from "./routes/features.routes"
+import userFeature from "./routes/userFeature.routes"
 
 app.use("/v1", workflows)
 app.use("/v1", forms)
@@ -22,5 +23,6 @@ app.use("/v1", projects)
 app.use("/v1", orgs)
 app.use("/v1", users)
 app.use("/v1", features)
+app.use("/v1", userFeature)
 
 export default app

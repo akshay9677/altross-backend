@@ -232,8 +232,8 @@ class ModuleBase {
       let { id } = oldRecord
 
       if (
-        !isEmpty(oldRecordLookup) &&
-        !isEmpty(newRecordLookup) &&
+        oldRecordLookup &&
+        newRecordLookup &&
         oldRecordLookup.length > newRecordLookup.length
       ) {
         let diff = _.difference(oldRecordLookup, newRecordLookup)
@@ -293,6 +293,44 @@ class ModuleBase {
         )
       }
     }
+  }
+  async associateRecords(
+    orgid,
+    nativeId,
+    nativeRefId,
+    foreignIds,
+    foreignModuleName,
+    foreignSchema,
+    foreignRefId
+  ) {
+    // native is the current module whereas foreign is the lookup to which association
+    // has to be created
+
+    let { moduleName: nativeModuleName } = this || {}
+    let nativeModel = this.getCurrDBModel(orgid)
+    let { name, schema } = foreignSchema
+    let foreignModel = getModel(orgid, name, schema)
+
+    let nativeRecord = await nativeModel.findOne({ id: nativeId })
+    let foreignRecords = await foreignModel.find({ id: { $in: foreignIds } })
+
+    return foreignRecords.map((foreignRecord) => {
+      let {
+        name: foreignName,
+        id: foreignId,
+        [foreignRefId]: foreignRef,
+      } = foreignRecord || {}
+      let { name: nativeName, [nativeRefId]: nativeRef } = nativeRecord || {}
+      return {
+        name: nativeName,
+        id: getId(nativeName + foreignName, 9999),
+        status: "ACTIVE",
+        [nativeModuleName]: [nativeId],
+        [foreignModuleName]: [foreignId],
+        [foreignRefId]: foreignRef,
+        [nativeRefId]: nativeRef,
+      }
+    })
   }
 }
 

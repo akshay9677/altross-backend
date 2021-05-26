@@ -23,5 +23,8 @@ router
 router
   .route("/modules/delete/features")
   .post((...args) => features.deleteRecord(...args))
+router
+  .route("/modules/associate/features")
+  .post((...args) => features.associateUsers(...args))
 
 export default router
