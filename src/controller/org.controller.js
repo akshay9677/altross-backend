@@ -1,4 +1,4 @@
-import ModuleBase from "./moduleBase.controller"
+import ModuleBase from "./module-base/moduleBase.controller"
 import { MODULES } from "../utils/moduleSchemas"
 
 const LookupHash = {
@@ -8,12 +8,12 @@ const LookupHash = {
 
 class Org extends ModuleBase {
   constructor() {
-    super(
-      MODULES["orgs"].schema,
-      MODULES["orgs"].name,
-      LookupHash,
-      MODULES["orgs"].name
-    )
+    super({
+      model: MODULES["orgs"].schema,
+      modelName: MODULES["orgs"].name,
+      lookupHash: LookupHash,
+      moduleName: MODULES["orgs"].name,
+    })
   }
 }
 

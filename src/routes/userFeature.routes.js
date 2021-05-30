@@ -14,5 +14,8 @@ router
 router
   .route("/modules/isactive/userFeature")
   .post((...args) => userFeature.isActive(...args))
+router
+  .route("/modules/update/userFeature")
+  .post((...args) => userFeature.updateRecord(...args))
 
 export default router

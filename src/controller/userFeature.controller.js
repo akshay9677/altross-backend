@@ -1,4 +1,4 @@
-import ModuleBase from "./moduleBase.controller"
+import ModuleBase from "./module-base/moduleBase.controller"
 import { MODULES } from "../utils/moduleSchemas"
 import { isEmpty } from "../utils/validation"
 import { errorResponse } from "../utils/responsehandler"
@@ -10,12 +10,12 @@ const LookupHash = {
 
 class UserFeature extends ModuleBase {
   constructor() {
-    super(
-      MODULES["userFeature"].schema,
-      MODULES["userFeature"].name,
-      LookupHash,
-      MODULES["userFeature"].name
-    )
+    super({
+      model: MODULES["userFeature"].schema,
+      modelName: MODULES["userFeature"].name,
+      lookupHash: LookupHash,
+      moduleName: MODULES["userFeature"].name,
+    })
   }
   async isActive(req, res) {
     try {

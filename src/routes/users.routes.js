@@ -25,6 +25,9 @@ router
   .post((...args) => users.deleteRecord(...args))
 router
   .route("/modules/associate/users")
-  .post((...args) => users.associateFeatures(...args))
+  .post((...args) => users.associate(...args))
+router
+  .route("/modules/dissociate/users")
+  .post((...args) => users.dissociate(...args))
 
 export default router

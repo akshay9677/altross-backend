@@ -1,4 +1,4 @@
-import ModuleBase from "../moduleBase.controller"
+import ModuleBase from "../module-base/moduleBase.controller"
 import { MODULES, OTHER_MODULES } from "../../utils/moduleSchemas"
 import { getModel } from "../getModel"
 import { isEmpty } from "../../utils/validation"
@@ -7,11 +7,13 @@ import { errorResponse } from "../../utils/responsehandler"
 
 class Views extends ModuleBase {
   constructor() {
-    super(
-      OTHER_MODULES["views"].schema,
-      OTHER_MODULES["views"].name,
-      OTHER_MODULES["views"].name
-    )
+    super({
+      model: OTHER_MODULES["views"].schema,
+      modelName: OTHER_MODULES["views"].name,
+      lookupHash: null,
+      moduleName: OTHER_MODULES["views"].name,
+      hideWorkflow: true,
+    })
   }
   getFieldForId(param) {
     let { name, moduleName } = param

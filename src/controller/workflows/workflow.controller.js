@@ -1,5 +1,5 @@
 import { WorkflowSchema } from "../../model/workflows/workflow.model"
-import ModuleBase from "../moduleBase.controller"
+import ModuleBase from "../module-base/moduleBase.controller"
 
 class Workflows extends ModuleBase {
   constructor() {

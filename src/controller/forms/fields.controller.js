@@ -1,14 +1,15 @@
-import ModuleBase from "../moduleBase.controller"
+import ModuleBase from "../module-base/moduleBase.controller"
 import { OTHER_MODULES, MODULES } from "../../utils/moduleSchemas"
 import { errorResponse } from "../../utils/responsehandler"
 
 class Fields extends ModuleBase {
   constructor() {
-    super(
-      OTHER_MODULES["fields"].schema,
-      OTHER_MODULES["fields"].name,
-      OTHER_MODULES["fields"].name
-    )
+    super({
+      model: OTHER_MODULES["fields"].schema,
+      modelName: OTHER_MODULES["fields"].name,
+      lookupHash: null,
+      moduleName: OTHER_MODULES["fields"].name,
+    })
   }
   async getModuleList(req, res) {
     try {

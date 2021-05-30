@@ -1,4 +1,4 @@
-import ModuleBase from "../moduleBase.controller"
+import ModuleBase from "../module-base/moduleBase.controller"
 import { MODULES, OTHER_MODULES } from "../../utils/moduleSchemas"
 import { errorResponse } from "../../utils/responsehandler"
 import { getModel } from "../getModel"
@@ -7,11 +7,12 @@ import mongoose from "mongoose"
 
 class Forms extends ModuleBase {
   constructor() {
-    super(
-      OTHER_MODULES["forms"].schema,
-      OTHER_MODULES["forms"].name,
-      OTHER_MODULES["forms"].name
-    )
+    super({
+      model: OTHER_MODULES["forms"].schema,
+      modelName: OTHER_MODULES["forms"].name,
+      lookupHash: null,
+      moduleName: OTHER_MODULES["forms"].name,
+    })
   }
   async defaultForm(moduleName, orgid) {
     let defaultFormSchema = mongoose.model(

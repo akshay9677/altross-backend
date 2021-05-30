@@ -1,4 +1,4 @@
-import ModuleBase from "./moduleBase.controller"
+import ModuleBase from "./module-base/moduleBase.controller"
 import { MODULES } from "../utils/moduleSchemas"
 
 import { isEmpty } from "../utils/validation"
@@ -11,19 +11,22 @@ const LookupHash = {
 
 class Projects extends ModuleBase {
   constructor() {
-    super(
-      MODULES["projects"].schema,
-      MODULES["projects"].name,
-      LookupHash,
-      MODULES["projects"].name
-    )
+    super({
+      model: MODULES["projects"].schema,
+      modelName: MODULES["projects"].name,
+      lookupHash: LookupHash,
+      moduleName: MODULES["projects"].name,
+    })
   }
   async getModuleRecord(req, res) {
     try {
       let { orgid } = req.headers
       let currModel = this.getCurrDBModel(orgid)
       let { id } = req.body
-      let params
+
+      if (isEmpty(id)) throw new Error("Id is required")
+
+      let params = {}
       if (id) params["id"] = id
       let record = await currModel.findOne(params)
 

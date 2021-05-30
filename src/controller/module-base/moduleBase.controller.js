@@ -1,15 +1,17 @@
-import { errorResponse } from "../utils/responsehandler"
-import { getModel } from "./getModel"
-import { isEmpty, getId } from "../utils/validation"
-import { executeEventMiddleWare } from "./event-middleware/execute.middleware"
+import { errorResponse } from "../../utils/responsehandler"
+import { getModel } from "../getModel"
+import { isEmpty, getId } from "../../utils/validation"
+import { executeEventMiddleWare } from "../event-middleware/execute.middleware"
 import _ from "lodash"
 
 class ModuleBase {
-  constructor(model, modelName, lookupHash, moduleName) {
+  constructor(props) {
+    let { model, modelName, lookupHash, moduleName, hideWorkflow } = props
     this.model = model
     this.modelName = modelName
     this.lookupHash = lookupHash
     this.moduleName = moduleName
+    this.hideWorkflow = hideWorkflow
   }
 
   getCurrDBModel(orgid) {
@@ -41,6 +43,9 @@ class ModuleBase {
       let { page, perPage, filter, sort } = param
       let totalCount, records
 
+      if (page !== 0) page = page - 1
+      else throw new Error("Page number cannot be zero")
+
       if (isEmpty(filter)) {
         records = await currModel
           .find()
@@ -54,7 +59,7 @@ class ModuleBase {
           .skip(Math.abs(perPage * page))
           .limit(perPage)
       }
-      totalCount = await currModel.countDocuments()
+      totalCount = records.length
 
       let meta = await this.getModuleLookupsList(records, currModel, orgid)
 
@@ -110,6 +115,11 @@ class ModuleBase {
       let record = await currModel.findOne({ id: id })
 
       if (isEmpty(record)) throw new Error("No record found for that Id")
+      let { _id } = record
+
+      let timeStamp = _id.getTimestamp()
+
+      record = { ...record._doc, createdTime: timeStamp }
 
       return res.status(200).json({
         data: record,
@@ -155,7 +165,7 @@ class ModuleBase {
       const record = await currModel.create(param)
       await this.createLookupRecords(record, currModel, orgid)
 
-      if (!isEmpty(record) && !isEmpty(this.moduleName))
+      if (!isEmpty(record) && !isEmpty(this.moduleName) && !this.hideWorkflow)
         executeEventMiddleWare(param, "create", this.moduleName, orgid)
 
       return res.status(200).json({
@@ -172,7 +182,7 @@ class ModuleBase {
     let { id } = record
     let promise = []
     let { lookupHash } = this
-    !isEmpty(lookups) &&
+    if (!isEmpty(lookups) && !isEmpty(lookupHash)) {
       lookups.forEach((lookup) => {
         if (!isEmpty(record[lookup]) && !isEmpty(lookupHash[lookup])) {
           let { name, schema } = lookupHash[lookup]
@@ -185,6 +195,7 @@ class ModuleBase {
           promise.push(updatePromise)
         }
       })
+    }
 
     return Promise.all(promise)
   }
@@ -199,7 +210,7 @@ class ModuleBase {
 
       if (isEmpty(record)) throw new Error("No record found for the given ID")
 
-      if (!isEmpty(this.moduleName)) {
+      if (!isEmpty(this.moduleName) && !this.hideWorkflow) {
         executeEventMiddleWare(
           { ...record._doc, ...data },
           "update",
@@ -265,7 +276,7 @@ class ModuleBase {
       if (isEmpty(records))
         throw new Error("No records were found for the given ID")
 
-      if (!isEmpty(this.moduleName))
+      if (!isEmpty(this.moduleName) && !this.hideWorkflow)
         executeEventMiddleWare(records, "delete", this.moduleName, orgid)
 
       await currModel.deleteMany({ id: { $in: id } })
