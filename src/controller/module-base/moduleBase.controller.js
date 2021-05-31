@@ -281,7 +281,11 @@ class ModuleBase {
 
       await currModel.deleteMany({ id: { $in: id } })
 
-      this.removeDeletedLookupRecords(id, currModel, orgid)
+      this.removeDeletedLookupRecords(
+        Array.isArray(id) ? id : [id],
+        currModel,
+        orgid
+      )
 
       return res.status(200).json({
         data: "Deleted successfully",
@@ -294,14 +298,16 @@ class ModuleBase {
 
   async removeDeletedLookupRecords(id, currModel, orgid) {
     let lookups = this.getMultiLookups(currModel)
-    for (let lookup of lookups) {
-      let { name, schema } = this.lookupHash[lookup] || {}
-      if (this.lookupHash[lookup]) {
-        let currLookupModel = getModel(orgid, name, schema)
-        await currLookupModel.updateMany(
-          { [this.modelName.toLowerCase()]: { $in: id } },
-          { $pullAll: { [this.modelName.toLowerCase()]: id } }
-        )
+    if (Array.isArray(id)) {
+      for (let lookup of lookups) {
+        let { name, schema } = this.lookupHash[lookup] || {}
+        if (this.lookupHash[lookup]) {
+          let currLookupModel = getModel(orgid, name, schema)
+          await currLookupModel.updateMany(
+            { [this.modelName.toLowerCase()]: { $in: id } },
+            { $pullAll: { [this.modelName.toLowerCase()]: id } }
+          )
+        }
       }
     }
   }

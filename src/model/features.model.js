@@ -25,6 +25,7 @@ export const FeaturesModel = new mongoose.Schema({
     unique: 1,
     id: 5,
     displayName: "Feature Id",
+    displayType: "COPY",
   },
   tags: { type: Array, id: 6, displayName: "Tags", displayType: "TAG" },
   projects: { type: Array, id: 7, lookup: true },
