@@ -6,6 +6,7 @@ import { OrgSchema } from "../model/orgs.model"
 import { UsersSchema } from "../model/users.model"
 import { FeaturesModel } from "../model/features.model"
 import { UserFeatureSchema } from "../model/userFeature.model"
+import { FeatureGroupModel } from "../model/featureGroup.model"
 
 export const MODULES = {
   projects: {
@@ -27,6 +28,10 @@ export const MODULES = {
   userFeature: {
     name: "userFeature",
     schema: UserFeatureSchema,
+  },
+  featureGroup: {
+    name: "featureGroup",
+    schema: FeatureGroupModel,
   },
 }
 

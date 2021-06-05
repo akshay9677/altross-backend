@@ -120,10 +120,12 @@ class ModuleBase {
       let timeStamp = _id.getTimestamp()
 
       record = { ...record._doc, createdTime: timeStamp }
+      let meta = await this.getModuleLookupsList([record], currModel, orgid)
 
       return res.status(200).json({
         data: record,
         error: null,
+        meta,
       })
     } catch (error) {
       return res.status(200).json(errorResponse(error))
@@ -158,7 +160,7 @@ class ModuleBase {
       let { orgid } = req.headers
       let currModel = this.getCurrDBModel(orgid)
       let param = req.body
-      let totalCount = getId(this.getFieldForId(param), 9999)
+      let totalCount = getId()
 
       param = { ...param, id: totalCount + 1 }
 
@@ -279,6 +281,8 @@ class ModuleBase {
       if (!isEmpty(this.moduleName) && !this.hideWorkflow)
         executeEventMiddleWare(records, "delete", this.moduleName, orgid)
 
+      if (this.beforeDeleteHook) this.beforeDeleteHook(records, orgid)
+
       await currModel.deleteMany({ id: { $in: id } })
 
       this.removeDeletedLookupRecords(
@@ -310,44 +314,6 @@ class ModuleBase {
         }
       }
     }
-  }
-  async associateRecords(
-    orgid,
-    nativeId,
-    nativeRefId,
-    foreignIds,
-    foreignModuleName,
-    foreignSchema,
-    foreignRefId
-  ) {
-    // native is the current module whereas foreign is the lookup to which association
-    // has to be created
-
-    let { moduleName: nativeModuleName } = this || {}
-    let nativeModel = this.getCurrDBModel(orgid)
-    let { name, schema } = foreignSchema
-    let foreignModel = getModel(orgid, name, schema)
-
-    let nativeRecord = await nativeModel.findOne({ id: nativeId })
-    let foreignRecords = await foreignModel.find({ id: { $in: foreignIds } })
-
-    return foreignRecords.map((foreignRecord) => {
-      let {
-        name: foreignName,
-        id: foreignId,
-        [foreignRefId]: foreignRef,
-      } = foreignRecord || {}
-      let { name: nativeName, [nativeRefId]: nativeRef } = nativeRecord || {}
-      return {
-        name: nativeName,
-        id: getId(nativeName + foreignName, 9999),
-        status: "ACTIVE",
-        [nativeModuleName]: [nativeId],
-        [foreignModuleName]: [foreignId],
-        [foreignRefId]: foreignRef,
-        [nativeRefId]: nativeRef,
-      }
-    })
   }
 }
 

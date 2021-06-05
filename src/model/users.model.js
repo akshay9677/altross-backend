@@ -30,4 +30,5 @@ export const UsersSchema = new mongoose.Schema({
   phone: { type: String, id: 6, displayName: "Phone" },
   orgs: { type: Array, id: 7, lookup: true, displayName: "Organization" },
   projects: { type: Array, id: 8, lookup: true },
+  featureGroup: { type: Array, id: 9, lookup: true },
 })

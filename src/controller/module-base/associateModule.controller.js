@@ -44,7 +44,9 @@ class AssociationModuleBase extends ModuleBase {
       let { name, schema } = MODULES[associationModuleName]
       let associationModel = getModel(orgid, name, schema)
 
-      let finalDbRecords = await associationModel.create(records)
+      let finalDbRecords = await associationModel.create(records, {
+        upsert: true,
+      })
 
       return res.status(200).json({
         data: finalDbRecords,
@@ -127,6 +129,19 @@ class AssociationModuleBase extends ModuleBase {
     } catch (error) {
       return res.status(200).json(errorResponse(error))
     }
+  }
+  async beforeDeleteHook(records, orgid) {
+    let { associationHash } = this
+    await Object.keys(associationHash).forEach(async (moduleName) => {
+      let { associationModule, nativeField } = associationHash[moduleName] || {}
+      let { name: associationModuleName } = associationModule || {}
+      let { name, schema } = MODULES[associationModuleName]
+      let associationModel = getModel(orgid, name, schema)
+
+      await associationModel.deleteMany({
+        [nativeField]: { $in: records.map((record) => record[nativeField]) },
+      })
+    })
   }
 }
 
