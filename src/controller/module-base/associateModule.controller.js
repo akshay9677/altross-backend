@@ -1,5 +1,5 @@
 import ModuleBase from "./moduleBase.controller"
-import { getId, isEmpty } from "../../utils/validation"
+import { isEmpty } from "../../utils/validation"
 import { getModel } from "../getModel"
 import { errorResponse } from "../../utils/responsehandler"
 import { MODULES } from "../../utils/moduleSchemas"
@@ -90,7 +90,7 @@ class AssociationModuleBase extends ModuleBase {
       } = nativeRecord || {}
       return {
         name: nativeName,
-        id: getId(nativeName + foreignName, 9999),
+        id: this.getIdByField(nativeName + foreignName, 9999),
         status: "ACTIVE",
         [nativeModuleName]: [currNativeId],
         [foreignModuleName]: [foreignId],
@@ -98,6 +98,16 @@ class AssociationModuleBase extends ModuleBase {
         [nativeRefId]: nativeRef,
       }
     })
+  }
+  getIdByField(value, max) {
+    if (value) {
+      let userKey = value
+      let userUniqueNum = Array.from(userKey)
+        .map((letter) => letter.charCodeAt(0))
+        .reduce((current, previous) => previous + current)
+      let colorIndex = userUniqueNum % max
+      return colorIndex
+    }
   }
   async dissociate(req, res) {
     try {

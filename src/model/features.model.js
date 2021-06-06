@@ -29,4 +29,5 @@ export const FeaturesModel = new mongoose.Schema({
   },
   tags: { type: Array, id: 6, displayName: "Tags", displayType: "TAG" },
   projects: { type: Array, id: 7, lookup: true },
+  featureGroup: { type: Array, id: 8, lookup: true },
 })

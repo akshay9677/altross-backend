@@ -20,6 +20,18 @@ export const FeatureGroupModel = new mongoose.Schema({
   description: { type: String, id: 3, displayName: "Description" },
   tags: { type: Array, id: 4, displayName: "Tags", displayType: "TAG" },
   projects: { type: Array, id: 5, lookup: true },
-  users: { type: Array, id: 6, lookup: true },
-  features: { type: Array, id: 7, lookup: true },
+  users: {
+    type: Array,
+    id: 6,
+    lookup: true,
+    displayName: "Users",
+    displayType: "MULTI_LOOKUP",
+  },
+  features: {
+    type: Array,
+    id: 7,
+    lookup: true,
+    displayName: "Features",
+    displayType: "MULTI_LOOKUP",
+  },
 })
