@@ -3,6 +3,7 @@ import { MODULES } from "../utils/moduleSchemas"
 
 const LookupHash = {
   projects: { ...MODULES.projects },
+  featureGroup: { ...MODULES.featureGroup, preFill: true },
 }
 
 const AssociationHash = {

@@ -191,7 +191,7 @@ class ModuleBase {
           let currLookupModel = getModel(orgid, name, schema)
           let updatePromise = currLookupModel.updateMany(
             { id: { $in: record[lookup] } },
-            { $addToSet: { [this.modelName.toLowerCase()]: id } }
+            { $addToSet: { [this.modelName]: id } }
           )
 
           promise.push(updatePromise)
