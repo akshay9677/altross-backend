@@ -2,6 +2,7 @@ import { isEmpty } from "../../utils/validation"
 import { getModel } from "../getModel"
 import { MODULES } from "../../utils/moduleSchemas"
 import ACTIONS_HASH from "../automation-actions/automation.actions"
+import mongoose from "mongoose"
 
 const OPERATOR_HASH = {
   Number: {
@@ -98,6 +99,39 @@ const OPERATOR_HASH = {
   },
 }
 
+const getMatchingWorkflows = async ({
+  orgid,
+  name,
+  workflowSchema,
+  moduleName,
+  paths,
+  event,
+}) => {
+  let workflowModel = getModel(orgid, name, workflowSchema)
+  let defaultWorkflowmodel = mongoose.model(name, workflowSchema)
+  // find the workflow with module name, field type and name
+  let moduleFieldMatchRecords = await workflowModel.find({
+    moduleName: moduleName,
+    "conditions.field": {
+      $in: Object.keys(paths).filter((prop) => {
+        return prop !== "_id" || prop !== "__v"
+      }),
+    },
+    event: event,
+  })
+
+  let defaultFieldMatchRecords = await defaultWorkflowmodel.find({
+    moduleName: moduleName,
+    "conditions.field": {
+      $in: Object.keys(paths).filter((prop) => {
+        return prop !== "_id" || prop !== "__v"
+      }),
+    },
+    event: event,
+  })
+  return [...defaultFieldMatchRecords, ...moduleFieldMatchRecords]
+}
+
 export const WorkflowExecution = async (
   record,
   event,
@@ -120,23 +154,36 @@ export const WorkflowExecution = async (
       return paths[field]
     })
 
-  let workflowModel = getModel(orgid, name, workflowSchema)
-  // find the workflow with module name, field type and name
-  let moduleFieldMatchRecords = await workflowModel.find({
-    moduleName: moduleName,
-    "conditions.field": {
-      $in: Object.keys(paths).filter((prop) => {
-        return prop !== "_id" || prop !== "__v"
-      }),
-    },
-    event: event,
+  let moduleFieldMatchRecords = await getMatchingWorkflows({
+    orgid,
+    name,
+    workflowSchema,
+    moduleName,
+    paths,
+    event,
   })
+
+  // let workflowModel = getModel(orgid, name, workflowSchema)
+  // // find the workflow with module name, field type and name
+  // let moduleFieldMatchRecords = await workflowModel.find({
+  //   moduleName: moduleName,
+  //   "conditions.field": {
+  //     $in: Object.keys(paths).filter((prop) => {
+  //       return prop !== "_id" || prop !== "__v"
+  //     }),
+  //   },
+  //   event: event,
+  // })
 
   let actionExecutionArray = []
 
   moduleFieldMatchRecords.forEach((currRecord) => {
-    let { conditions, matchCondition, actions, event: workflowEvent } =
-      currRecord || []
+    let {
+      conditions,
+      matchCondition,
+      actions,
+      event: workflowEvent,
+    } = currRecord || []
     if (workflowEvent === event) {
       let conditionsSatisfiedArray = conditions.map((condition) => {
         let { field, operator, value } = condition || {}
@@ -168,12 +215,12 @@ export const WorkflowExecution = async (
       }
     }
   })
+
   actionExecutionArray.forEach((action) => {
     let { actionType } = action
     if (!isEmpty(ACTIONS_HASH[actionType])) {
       let currAction = ACTIONS_HASH[actionType]
       currAction(record, currModel, action)
     }
-    console.log(actionType)
   })
 }
