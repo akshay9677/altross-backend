@@ -1,5 +1,5 @@
 import express from "express"
-import Workflows from "../../controller/workflows/workflow.controller"
+import Workflows from "../../controller/automations/workflows/workflow.controller"
 
 const workflows = new Workflows()
 

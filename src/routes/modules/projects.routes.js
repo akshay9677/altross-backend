@@ -1,5 +1,5 @@
 import express from "express"
-import Projects from "../controller/projects.controller"
+import Projects from "../../controller/modules/projects.controller"
 
 const projects = new Projects()
 

@@ -1,7 +1,7 @@
 import { errorResponse } from "../../utils/responsehandler"
 import { getModel } from "../getModel"
 import { isEmpty, getId } from "../../utils/validation"
-import { executeEventMiddleWare } from "../event-middleware/execute.middleware"
+import { executeEventMiddleWare } from "../automations/event-middleware/execute.middleware"
 import _ from "lodash"
 
 class ModuleBase {

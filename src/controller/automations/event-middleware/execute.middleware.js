@@ -1,6 +1,6 @@
-import { WorkflowSchema } from "../../model/workflows/workflow.model"
+import { WorkflowSchema } from "../../../model/workflows/workflow.model"
 import { WorkflowExecution } from "../workflows/workflow.execution"
-import { isEmpty } from "../../utils/validation"
+import { isEmpty } from "../../../utils/validation"
 
 const AUTOMATION_MODULES = [
   {

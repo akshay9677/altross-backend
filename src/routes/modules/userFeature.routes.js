@@ -1,5 +1,5 @@
 import express from "express"
-import UserFeature from "../controller/userFeature.controller"
+import UserFeature from "../../controller/modules/userFeature.controller"
 
 const userFeature = new UserFeature()
 

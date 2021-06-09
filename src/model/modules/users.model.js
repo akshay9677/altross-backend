@@ -28,7 +28,6 @@ export const UsersSchema = new mongoose.Schema({
   },
   email: { type: String, id: 5, displayName: "Email" },
   phone: { type: String, id: 6, displayName: "Phone" },
-  orgs: { type: Array, id: 7, lookup: true, displayName: "Organization" },
   projects: { type: Array, id: 8, lookup: true },
   featureGroup: { type: Array, id: 9, lookup: true },
 })

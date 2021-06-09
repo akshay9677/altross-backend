@@ -1,5 +1,5 @@
 import express from "express"
-import FeatureGroup from "../controller/featureGroup.controller"
+import FeatureGroup from "../../controller/modules/featureGroup.controller"
 
 const featureGroup = new FeatureGroup()
 

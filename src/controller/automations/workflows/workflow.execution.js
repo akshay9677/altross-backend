@@ -1,6 +1,6 @@
-import { isEmpty } from "../../utils/validation"
-import { getModel } from "../getModel"
-import { MODULES } from "../../utils/moduleSchemas"
+import { isEmpty } from "../../../utils/validation"
+import { getModel } from "../../getModel"
+import { MODULES } from "../../../utils/moduleSchemas"
 import ACTIONS_HASH from "../automation-actions/automation.actions"
 import mongoose from "mongoose"
 

@@ -1,5 +1,5 @@
 import express from "express"
-import Users from "../controller/users.controller"
+import Users from "../../controller/modules/users.controller"
 
 const users = new Users()
 

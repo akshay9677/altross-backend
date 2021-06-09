@@ -1,5 +1,5 @@
-import AssociationModuleBase from "./module-base/associateModule.controller"
-import { MODULES } from "../utils/moduleSchemas"
+import AssociationModuleBase from "../module-base/associateModule.controller"
+import { MODULES } from "../../utils/moduleSchemas"
 
 const LookupHash = {
   projects: { ...MODULES.projects },

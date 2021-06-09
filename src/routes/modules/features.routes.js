@@ -1,5 +1,5 @@
 import express from "express"
-import Features from "../controller/features.controller"
+import Features from "../../controller/modules/features.controller"
 
 const features = new Features()
 

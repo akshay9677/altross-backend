@@ -1,11 +1,10 @@
-import ModuleBase from "./module-base/moduleBase.controller"
-import { MODULES } from "../utils/moduleSchemas"
+import ModuleBase from "../module-base/moduleBase.controller"
+import { MODULES } from "../../utils/moduleSchemas"
 
-import { isEmpty } from "../utils/validation"
-import { errorResponse } from "../utils/responsehandler"
+import { isEmpty } from "../../utils/validation"
+import { errorResponse } from "../../utils/responsehandler"
 
 const LookupHash = {
-  orgs: { ...MODULES.orgs },
   users: { ...MODULES.users },
 }
 

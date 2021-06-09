@@ -1,7 +1,8 @@
-import ModuleBase from "./module-base/moduleBase.controller"
-import { MODULES } from "../utils/moduleSchemas"
-import { isEmpty } from "../utils/validation"
-import { errorResponse } from "../utils/responsehandler"
+import ModuleBase from "../module-base/moduleBase.controller"
+import { MODULES } from "../../utils/moduleSchemas"
+
+import { isEmpty } from "../../utils/validation"
+import { errorResponse } from "../../utils/responsehandler"
 
 const LookupHash = {
   users: { ...MODULES.users, preFill: true },

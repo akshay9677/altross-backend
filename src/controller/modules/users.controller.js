@@ -1,11 +1,10 @@
-import AssociationModuleBase from "./module-base/associateModule.controller"
-import { MODULES } from "../utils/moduleSchemas"
-import { isEmpty } from "../utils/validation"
-import { getModel } from "./getModel"
-import { errorResponse } from "../utils/responsehandler"
+import AssociationModuleBase from "../module-base/associateModule.controller"
+import { MODULES } from "../../utils/moduleSchemas"
+import { isEmpty } from "../../utils/validation"
+import { getModel } from "../getModel"
+import { errorResponse } from "../../utils/responsehandler"
 
 const LookupHash = {
-  orgs: { ...MODULES.orgs },
   projects: { ...MODULES.projects },
   featureGroup: { ...MODULES.featureGroup, preFill: true },
 }

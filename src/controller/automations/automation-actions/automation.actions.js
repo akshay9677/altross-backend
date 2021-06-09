@@ -1,4 +1,4 @@
-import { isEmpty } from "../../utils/validation"
+import { isEmpty } from "../../../utils/validation"
 
 const ACTIONS_HASH = {
   1: async (recordContext, currModel, action) => {

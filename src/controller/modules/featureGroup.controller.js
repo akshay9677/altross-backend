@@ -1,5 +1,5 @@
-import ModuleBase from "./module-base/moduleBase.controller"
-import { MODULES } from "../utils/moduleSchemas"
+import ModuleBase from "../module-base/moduleBase.controller"
+import { MODULES } from "../../utils/moduleSchemas"
 
 const LookupHash = {
   users: { ...MODULES.users, preFill: true },
