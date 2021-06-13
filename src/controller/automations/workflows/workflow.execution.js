@@ -4,7 +4,7 @@ import { MODULES } from "../../../utils/moduleSchemas"
 import ACTIONS_HASH from "../automation-actions/automation.actions"
 import mongoose from "mongoose"
 
-const OPERATOR_HASH = {
+export const OPERATOR_HASH = {
   Number: {
     10: {
       name: "equal",

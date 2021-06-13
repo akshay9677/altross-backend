@@ -3,6 +3,7 @@ import { isEmpty } from "../../utils/validation"
 import { getModel } from "../getModel"
 import { errorResponse } from "../../utils/responsehandler"
 import { MODULES } from "../../utils/moduleSchemas"
+import dlv from "dlv"
 
 class AssociationModuleBase extends ModuleBase {
   constructor(props) {
@@ -77,7 +78,9 @@ class AssociationModuleBase extends ModuleBase {
       [foreignRefId]: { $in: foreignIds },
     })
 
-    return foreignRecords.map((foreignRecord) => {
+    let finalRecords
+
+    finalRecords = foreignRecords.map((foreignRecord) => {
       let {
         name: foreignName,
         id: foreignId,
@@ -88,6 +91,10 @@ class AssociationModuleBase extends ModuleBase {
         [nativeRefId]: nativeRef,
         id: currNativeId,
       } = nativeRecord || {}
+      let otherProps = this.getExtraProps({
+        foreign: { moduleName: foreignModuleName, data: foreignRecord },
+        native: { moduleName: nativeModuleName, data: nativeRecord },
+      })
       return {
         name: nativeName,
         id: this.getIdByField(nativeName + foreignName, 9999),
@@ -96,8 +103,34 @@ class AssociationModuleBase extends ModuleBase {
         [foreignModuleName]: [foreignId],
         [foreignRefId]: foreignRef,
         [nativeRefId]: nativeRef,
+        ...otherProps,
       }
     })
+
+    return finalRecords
+  }
+  getExtraProps({ foreign, native }) {
+    let { moduleName: foreignModuleName } = foreign
+    let { moduleName: nativeModuleName } = native
+
+    let otherProps
+
+    if ([nativeModuleName, foreignModuleName].includes("features")) {
+      let targetModule
+      if (nativeModuleName === "features") {
+        targetModule = native
+      } else {
+        targetModule = foreign
+      }
+
+      let conditions = dlv(targetModule, "data.conditions", [])
+      let conditionMatcher = dlv(targetModule, "data.conditionMatcher", [])
+      otherProps = { conditions, conditionMatcher }
+    } else {
+      otherProps = {}
+    }
+
+    return otherProps
   }
   getIdByField(value, max) {
     if (value) {

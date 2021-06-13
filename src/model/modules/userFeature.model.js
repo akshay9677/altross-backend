@@ -47,4 +47,6 @@ export const UserFeatureSchema = new mongoose.Schema({
     displayName: "Feature Id",
     displayType: "COPY",
   },
+  conditions: { type: Array, id: 9, displayName: "Conditions" },
+  conditionMatcher: { type: Array, id: 10 },
 })
