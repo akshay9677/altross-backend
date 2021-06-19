@@ -47,6 +47,11 @@ export const UserFeatureSchema = new mongoose.Schema({
     displayName: "Feature Id",
     displayType: "COPY",
   },
-  conditions: { type: Array, id: 9, displayName: "Conditions" },
-  conditionMatcher: { type: Array, id: 10 },
+  featureGroup: {
+    type: Array,
+    id: 9,
+    lookup: true,
+    displayName: "Feature Group",
+    displayType: "SINGLE_LOOKUP",
+  },
 })

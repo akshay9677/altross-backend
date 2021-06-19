@@ -109,26 +109,8 @@ class AssociationModuleBase extends ModuleBase {
 
     return finalRecords
   }
-  getExtraProps({ foreign, native }) {
-    let { moduleName: foreignModuleName } = foreign
-    let { moduleName: nativeModuleName } = native
-
-    let otherProps
-
-    if ([nativeModuleName, foreignModuleName].includes("features")) {
-      let targetModule
-      if (nativeModuleName === "features") {
-        targetModule = native
-      } else {
-        targetModule = foreign
-      }
-
-      let conditions = dlv(targetModule, "data.conditions", [])
-      let conditionMatcher = dlv(targetModule, "data.conditionMatcher", [])
-      otherProps = { conditions, conditionMatcher }
-    } else {
-      otherProps = {}
-    }
+  getExtraProps() {
+    let otherProps = {}
 
     return otherProps
   }

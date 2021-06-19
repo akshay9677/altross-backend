@@ -5,6 +5,8 @@ import { isEmpty } from "../../utils/validation"
 import { errorResponse } from "../../utils/responsehandler"
 
 import { OPERATOR_HASH } from "../automations/workflows/workflow.execution"
+import { getModel } from "../getModel"
+import dlv from "dlv"
 
 const LookupHash = {
   users: { ...MODULES.users, preFill: true },
@@ -23,7 +25,7 @@ class UserFeature extends ModuleBase {
   async isActive(req, res) {
     try {
       let { orgid } = req.headers
-      let { userId, featureId, resource, status: currStatus } = req.body
+      let { userId, featureId, resource } = req.body
 
       if (isEmpty(userId)) throw new Error("User Id is required")
       if (isEmpty(featureId)) throw new Error("Feature Id is required")
@@ -31,32 +33,74 @@ class UserFeature extends ModuleBase {
       let currModel = this.getCurrDBModel(orgid)
 
       let record = await currModel.findOne({ userId, featureId })
+      let { status: currStatus } = record
+      // get feature group from user
+      let usersModel = getModel(
+        orgid,
+        MODULES["users"].name,
+        MODULES["users"].schema
+      )
+      let userRecord = await usersModel.findOne({ userId })
+      let currFeatureGroup = dlv(userRecord, "featureGroup.0", null)
+      // get conditions from feature record
+      let featuresModel = getModel(
+        orgid,
+        MODULES["features"].name,
+        MODULES["features"].schema
+      )
+      let featureRecord = await featuresModel.findOne({ featureId })
       if (isEmpty(record))
         throw new Error("No association is found for the given id's")
 
-      let { conditions, conditionMatcher } = record
+      let { conditions, conditionMatcher } = featureRecord
       let status
 
-      if (!isEmpty(conditions)) {
+      if (!isEmpty(conditions) && !isEmpty(conditionMatcher)) {
         let conditionsSatisfiedArray = conditions.map((condition) => {
-          let { key, value, operator, dataType } = condition
+          let { key, value, operator, dataType, featureGroup } = condition
           let actualValue = resource[key]
           if (
-            !isEmpty(OPERATOR_HASH[dataType]) &&
-            !isEmpty((OPERATOR_HASH[dataType] || {})[operator])
+            isEmpty(featureGroup) ||
+            (!isEmpty(featureGroup) && featureGroup === currFeatureGroup)
           ) {
-            let selectedOperator = OPERATOR_HASH[dataType][operator]
-            return selectedOperator.action(actualValue, value)
+            if (
+              !isEmpty(OPERATOR_HASH[dataType]) &&
+              !isEmpty((OPERATOR_HASH[dataType] || {})[operator])
+            ) {
+              let selectedOperator = OPERATOR_HASH[dataType][operator]
+              return selectedOperator.action(actualValue, value)
+            }
+          } else {
+            return false
           }
         })
 
-        let finalStatus = conditionsSatisfiedArray.reduce(
-          (acc, curr, currIndex) => {
-            let matcher = conditionMatcher[currIndex - 1]
-            if (matcher === "and") return acc && curr
-            else return acc || curr
+        for (let i = 0; i < conditionMatcher.length; i++) {
+          let charAtIndex = conditionMatcher.charAt(i)
+          if (this.isNumeric(charAtIndex)) {
+            let actualVal =
+              conditionsSatisfiedArray[conditionMatcher.charAt(i) - 1]
+
+            if (!isEmpty(actualVal)) {
+              conditionMatcher = this.replaceChar(
+                conditionMatcher,
+                `${actualVal}`,
+                i
+              )
+            } else {
+              conditionMatcher = this.replaceChar(
+                conditionMatcher,
+                `${false}`,
+                i
+              )
+            }
           }
-        )
+        }
+
+        conditionMatcher = conditionMatcher.replace(/and/g, "&&")
+        conditionMatcher = conditionMatcher.replace(/or/g, "||")
+
+        let finalStatus = eval(conditionMatcher)
 
         if (finalStatus) {
           status = "ACTIVE"
@@ -79,6 +123,18 @@ class UserFeature extends ModuleBase {
     } catch (error) {
       return res.status(200).json(errorResponse(error))
     }
+  }
+  isNumeric(str) {
+    if (typeof str != "string") return false
+    return !isNaN(str) && !isNaN(parseFloat(str))
+  }
+
+  replaceChar(origString, replaceChar, index) {
+    let firstPart = origString.substr(0, index)
+    let lastPart = origString.substr(index + 1)
+
+    let newString = firstPart + replaceChar + lastPart
+    return newString
   }
 }
 

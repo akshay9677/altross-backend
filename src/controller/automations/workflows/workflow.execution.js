@@ -8,11 +8,13 @@ export const OPERATOR_HASH = {
   Number: {
     10: {
       name: "equal",
-      action: (recordValue, conditionValue) => recordValue === conditionValue,
+      action: (recordValue, conditionValue) =>
+        recordValue === Number(conditionValue),
     },
     11: {
       name: "notequal",
-      action: (recordValue, conditionValue) => recordValue !== conditionValue,
+      action: (recordValue, conditionValue) =>
+        recordValue !== Number(conditionValue),
     },
     12: {
       name: "greaterthan",
@@ -21,7 +23,7 @@ export const OPERATOR_HASH = {
     13: {
       name: "greaterthanequal",
       action: (recordValue, conditionValue) =>
-        recordValue > conditionValue || recordValue === conditionValue,
+        recordValue > conditionValue || recordValue === Number(conditionValue),
     },
     14: {
       name: "lesserthan",
@@ -30,7 +32,7 @@ export const OPERATOR_HASH = {
     15: {
       name: "lesserthanequal",
       action: (recordValue, conditionValue) =>
-        recordValue < conditionValue || recordValue === conditionValue,
+        recordValue < conditionValue || recordValue === Number(conditionValue),
     },
     16: {
       name: "empty",

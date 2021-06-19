@@ -85,7 +85,9 @@ class Users extends AssociationModuleBase {
           foreignModule,
           foreignField
         )
-        records = this.filterForGroup(records, featureGroupId)
+        records = records.map((record) => {
+          return { ...record, featureGroup: featureGroupId }
+        })
         moduleName = "features"
       } else {
         if (isEmpty(associationHash) || isEmpty(associationHash[moduleName])) {
@@ -108,24 +110,6 @@ class Users extends AssociationModuleBase {
           foreignModule,
           foreignField
         )
-
-        records = records.map((currRecord) => {
-          let { conditions, conditionMatcher } = currRecord
-
-          conditions = conditions.filter((condition, condIndex) => {
-            let { featureGroup } = condition
-            if (!isEmpty(featureGroup)) {
-              if (condIndex - 1 > 0 || condIndex - 1 === 0) {
-                conditionMatcher.splice(condIndex - 1, 1)
-              } else {
-                conditionMatcher.splice(condIndex, 1)
-              }
-            }
-            return isEmpty(featureGroup)
-          })
-
-          return { ...currRecord, conditions, conditionMatcher }
-        })
       }
       let { associationModule } = associationHash[moduleName] || {}
       let { name: associationModuleName } = associationModule || {}
@@ -146,31 +130,6 @@ class Users extends AssociationModuleBase {
     } catch (error) {
       return res.status(200).json(errorResponse(error))
     }
-  }
-  filterForGroup(records, currGroupId) {
-    return records.map((record) => {
-      let { conditions, conditionMatcher } = record || {}
-      if (!isEmpty(conditions)) {
-        conditions = conditions.filter((condition, condIndex) => {
-          let { featureGroup } = condition
-          if (isEmpty(featureGroup)) {
-            return true
-          } else if (featureGroup === currGroupId) {
-            return true
-          } else {
-            if (condIndex - 1 > 0 || condIndex - 1 === 0) {
-              conditionMatcher.splice(condIndex - 1, 1)
-            } else {
-              conditionMatcher.splice(condIndex, 1)
-            }
-            return false
-          }
-        })
-        return { ...record, conditions, conditionMatcher }
-      } else {
-        return record
-      }
-    })
   }
   async dissociate(req, res) {
     try {
