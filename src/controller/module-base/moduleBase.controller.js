@@ -61,6 +61,12 @@ class ModuleBase {
       }
       totalCount = records.length
 
+      records = records.map((record) => {
+        let { _id } = record || {}
+        let timeStamp = _id.getTimestamp()
+        return { ...record._doc, createdTime: timeStamp }
+      })
+
       let meta = await this.getModuleLookupsList(records, currModel, orgid)
 
       return res.status(200).json({

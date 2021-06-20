@@ -6,6 +6,7 @@ import { UsersSchema } from "../model/modules/users.model"
 import { FeaturesModel } from "../model/modules/features.model"
 import { UserFeatureSchema } from "../model/modules/userFeature.model"
 import { FeatureGroupModel } from "../model/modules/featureGroup.model"
+import { NotificationSchema } from "../model/workflows/notifications.model"
 
 export const MODULES = {
   projects: {
@@ -42,5 +43,9 @@ export const OTHER_MODULES = {
   views: {
     name: "views",
     schema: ViewsSchema,
+  },
+  notifications: {
+    name: "notifications",
+    schema: NotificationSchema,
   },
 }

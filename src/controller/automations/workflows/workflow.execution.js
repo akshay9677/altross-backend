@@ -222,7 +222,14 @@ export const WorkflowExecution = async (
     let { actionType } = action
     if (!isEmpty(ACTIONS_HASH[actionType])) {
       let currAction = ACTIONS_HASH[actionType]
-      currAction(record, currModel, action)
+      currAction({
+        recordContext: record,
+        currModel,
+        action,
+        event,
+        moduleName: MODULES[moduleName].name,
+        orgid,
+      })
     }
   })
 }
