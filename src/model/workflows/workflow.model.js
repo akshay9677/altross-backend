@@ -20,4 +20,5 @@ export const WorkflowSchema = new mongoose.Schema({
     },
   ],
   moduleName: { type: String, required: true },
+  type: { type: String, enum: ["WORKFLOW", "APP_NOTIFICATIONS"] },
 })

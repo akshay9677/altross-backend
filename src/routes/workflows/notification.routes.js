@@ -17,5 +17,11 @@ router
 router
   .route("/modules/delete/notifications")
   .post((...args) => notifications.deleteRecord(...args))
+router
+  .route("/modules/seen/notifications")
+  .post((...args) => notifications.seen(...args))
+router
+  .route("/modules/seencount/notifications")
+  .post((...args) => notifications.seenCount(...args))
 
 export default router
