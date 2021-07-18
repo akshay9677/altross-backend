@@ -161,30 +161,16 @@ class ModuleBase {
     }
   }
 
-  async createRecord(req, res) {
-    try {
-      let { orgid } = req.headers
-      let currModel = this.getCurrDBModel(orgid)
-      let param = req.body
-      let totalCount = getId()
+  // Create Record Handler
+  async createHandler({ orgid, currModel, param }) {
+    const record = await currModel.create(param)
+    await this.createLookupRecords(record, currModel, orgid)
 
-      param = { ...param, id: totalCount + 1 }
+    if (!isEmpty(record) && !isEmpty(this.moduleName) && !this.hideWorkflow)
+      executeEventMiddleWare(param, "create", this.moduleName, orgid)
 
-      const record = await currModel.create(param)
-      await this.createLookupRecords(record, currModel, orgid)
-
-      if (!isEmpty(record) && !isEmpty(this.moduleName) && !this.hideWorkflow)
-        executeEventMiddleWare(param, "create", this.moduleName, orgid)
-
-      return res.status(200).json({
-        data: record,
-        error: null,
-      })
-    } catch (error) {
-      return res.status(200).json(errorResponse(error))
-    }
+    return record
   }
-
   async createLookupRecords(record, currModel, orgid) {
     let lookups = this.getMultiLookups(currModel)
     let { id } = record
@@ -207,38 +193,50 @@ class ModuleBase {
 
     return Promise.all(promise)
   }
-
-  async updateRecord(req, res) {
+  async createRecord(req, res) {
     try {
       let { orgid } = req.headers
       let currModel = this.getCurrDBModel(orgid)
       let param = req.body
-      let { id, data } = param
-      let record = await currModel.findOneAndUpdate({ id: id }, data)
+      let totalCount = getId()
 
-      if (isEmpty(record)) throw new Error("No record found for the given ID")
+      param = { ...param, id: totalCount + 1 }
 
-      if (!isEmpty(this.moduleName) && !this.hideWorkflow) {
-        executeEventMiddleWare(
-          { ...record._doc, ...data },
-          "update",
-          this.moduleName,
-          orgid
-        )
-      }
-
-      await this.removeLookupRecords(record, data, currModel, orgid)
-
-      let actualRecord = { ...record._doc, ...data }
-      await this.createLookupRecords(actualRecord, currModel, orgid)
+      let record = await this.createHandler({ orgid, currModel, param })
 
       return res.status(200).json({
-        data: actualRecord,
+        data: record,
         error: null,
       })
     } catch (error) {
       return res.status(200).json(errorResponse(error))
     }
+  }
+
+  // Update Record Handlers
+
+  async updateHandler({
+    orgid,
+    currModel,
+    param,
+    moduleName,
+    executeMiddleWare,
+  }) {
+    let { condition, data } = param
+    let record = await currModel.findOneAndUpdate(condition, data)
+
+    if (isEmpty(record)) throw new Error("No record found for the given ID")
+
+    if (!isEmpty(moduleName) && executeMiddleWare) {
+      executeEventMiddleWare(
+        { ...record._doc, ...data },
+        "update",
+        moduleName,
+        orgid
+      )
+    }
+
+    return record
   }
 
   async removeLookupRecords(oldRecord, newRecord, currModel, orgid) {
@@ -273,37 +271,48 @@ class ModuleBase {
     return Promise.all(promise)
   }
 
-  async deleteRecord(req, res) {
+  async updateRecord(req, res) {
     try {
       let { orgid } = req.headers
       let currModel = this.getCurrDBModel(orgid)
-      let { id } = req.body
-
-      let records = await currModel.find({ id: { $in: id } })
-
-      if (isEmpty(records))
-        throw new Error("No records were found for the given ID")
-
-      if (!isEmpty(this.moduleName) && !this.hideWorkflow)
-        executeEventMiddleWare(records, "delete", this.moduleName, orgid)
-
-      if (this.beforeDeleteHook) this.beforeDeleteHook(records, orgid)
-
-      await currModel.deleteMany({ id: { $in: id } })
-
-      this.removeDeletedLookupRecords(
-        Array.isArray(id) ? id : [id],
+      let param = req.body
+      let { id, data } = param
+      let record = await this.updateHandler({
+        orgid,
         currModel,
-        orgid
-      )
+        param: { condition: { id }, data },
+        moduleName: this.moduleName,
+        executeMiddleWare: !this.hideWorkflow,
+      })
+      await this.removeLookupRecords(record, data, currModel, orgid)
 
+      let actualRecord = { ...record._doc, ...data }
+      await this.createLookupRecords(actualRecord, currModel, orgid)
       return res.status(200).json({
-        data: "Deleted successfully",
+        data: actualRecord,
         error: null,
       })
     } catch (error) {
       return res.status(200).json(errorResponse(error))
     }
+  }
+  // Delete Record Handler
+  async deleteHandler({ orgid, currModel, id }) {
+    let records = await currModel.find({ id: { $in: id } })
+    if (isEmpty(records))
+      throw new Error("No records were found for the given ID")
+    if (this.beforeDeleteHook) this.beforeDeleteHook(records, orgid)
+
+    if (!isEmpty(this.moduleName) && !this.hideWorkflow)
+      executeEventMiddleWare(records, "delete", this.moduleName, orgid)
+
+    await currModel.deleteMany({ id: { $in: id } })
+
+    this.removeDeletedLookupRecords(
+      Array.isArray(id) ? id : [id],
+      currModel,
+      orgid
+    )
   }
 
   async removeDeletedLookupRecords(id, currModel, orgid) {
@@ -319,6 +328,22 @@ class ModuleBase {
           )
         }
       }
+    }
+  }
+  async deleteRecord(req, res) {
+    try {
+      let { orgid } = req.headers
+      let currModel = this.getCurrDBModel(orgid)
+      let { id } = req.body
+
+      this.deleteHandler({ orgid, currModel, id })
+
+      return res.status(200).json({
+        data: "Deleted successfully",
+        error: null,
+      })
+    } catch (error) {
+      return res.status(200).json(errorResponse(error))
     }
   }
 }

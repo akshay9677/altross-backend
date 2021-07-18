@@ -32,4 +32,10 @@ export const FeaturesModel = new mongoose.Schema({
   featureGroup: { type: Array, id: 8, lookup: true },
   conditions: { type: Array, id: 9 },
   conditionMatcher: { type: String, id: 10 },
+  conditionType: {
+    type: String,
+    id: 11,
+    enum: ["CUSTOM", "MATCH_ALL", "MATCH_ANY"],
+  },
+  schedules: { type: Array, id: 12 },
 })

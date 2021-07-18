@@ -3,8 +3,7 @@ import { isEmpty } from "../../utils/validation"
 import { getModel } from "../getModel"
 import { errorResponse } from "../../utils/responsehandler"
 import { MODULES } from "../../utils/moduleSchemas"
-import dlv from "dlv"
-
+import { cancelJob } from "../../utils/jobs.utils"
 class AssociationModuleBase extends ModuleBase {
   constructor(props) {
     let { model, modelName, lookupHash, moduleName, associationHash } = props
@@ -94,6 +93,7 @@ class AssociationModuleBase extends ModuleBase {
       let otherProps = this.getExtraProps({
         foreign: { moduleName: foreignModuleName, data: foreignRecord },
         native: { moduleName: nativeModuleName, data: nativeRecord },
+        orgid,
       })
       return {
         name: nativeName,
@@ -146,6 +146,10 @@ class AssociationModuleBase extends ModuleBase {
       await associationModel.deleteMany({
         [nativeField]: id,
         [foreignField]: { $in: foriegnIds },
+      })
+      foriegnIds.forEach((foreignid) => {
+        let name = `${id}${foreignid}`
+        cancelJob({ orgid, name })
       })
       return res.status(200).json({
         data: "Records dissociated successfully",

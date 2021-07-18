@@ -1,8 +1,11 @@
 import AssociationModuleBase from "../module-base/associateModule.controller"
-import { MODULES } from "../../utils/moduleSchemas"
+import { MODULES, OTHER_MODULES } from "../../utils/moduleSchemas"
 import { isEmpty } from "../../utils/validation"
 import { getModel } from "../getModel"
 import { errorResponse } from "../../utils/responsehandler"
+import { cancelJob } from "../../utils/jobs.utils"
+import dlv from "dlv"
+import nodeSchedule from "node-schedule"
 
 const LookupHash = {
   projects: { ...MODULES.projects },
@@ -194,6 +197,10 @@ class Users extends AssociationModuleBase {
       let { name, schema } = MODULES[associationModuleName]
       let associationModel = getModel(orgid, name, schema)
 
+      foriegnIds.forEach((foreignid) => {
+        let name = `${id}${foreignid}`
+        cancelJob({ orgid, name })
+      })
       await associationModel.deleteMany({
         [nativeField]: id,
         [foreignField]: { $in: foriegnIds },
@@ -204,6 +211,92 @@ class Users extends AssociationModuleBase {
       })
     } catch (error) {
       return res.status(200).json(errorResponse(error))
+    }
+  }
+  async getExtraProps(records) {
+    // association hash
+    let { associationHash, updateHandler } = this
+    let { associationModule } = associationHash["features"] || {}
+    let { name: associationModuleName } = associationModule || {}
+    let { name, schema } = MODULES[associationModuleName]
+    let orgid = dlv(records, "orgid")
+    let associationModel = getModel(orgid, name, schema)
+
+    // feature & user data
+    let features = dlv(records, "foreign.data")
+    let user = dlv(records, "native.data")
+    let currUserFeatureGroup = dlv(user, "featureGroup.0")
+
+    if (
+      !isEmpty(currUserFeatureGroup) &&
+      !isEmpty(user) &&
+      !isEmpty(features)
+    ) {
+      let { schedules } = features || {}
+      schedules = schedules.filter((schedule) => {
+        let { featureGroup } = schedule || {}
+        if (!isEmpty(featureGroup) && featureGroup === currUserFeatureGroup) {
+          return true
+        } else if (isEmpty(featureGroup)) {
+          return true
+        } else {
+          return false
+        }
+      })
+      let { term } = schedules[0] || {}
+      let job
+      let date = new Date()
+      let { featureId } = features || {}
+      let { userId } = user || {}
+      let uniqueName = `${userId}${featureId}`
+      if (term === "ANUALY") {
+        date.setFullYear(date.getFullYear() + 1)
+        job = nodeSchedule.scheduleJob(uniqueName, date, async function () {
+          let param = {
+            condition: { featureId, userId },
+            data: { status: "EXPIRED" },
+          }
+          updateHandler({
+            orgid,
+            currModel: associationModel,
+            param,
+            moduleName: "userFeature",
+            executeMiddleWare: true,
+          })
+        })
+      } else if (term === "MONTHLY") {
+        date.setMonth(date.getMonth() + 1)
+        job = nodeSchedule.scheduleJob(uniqueName, date, async function () {
+          let param = {
+            condition: { featureId, userId },
+            data: { status: "EXPIRED" },
+          }
+          updateHandler({
+            orgid,
+            currModel: associationModel,
+            param,
+            moduleName: "userFeature",
+            executeMiddleWare: true,
+          })
+        })
+      }
+      if (!isEmpty(job) && !isEmpty(job.pendingInvocations)) {
+        delete job.pendingInvocations
+        let jobData = {
+          name: uniqueName,
+          job,
+          moduleName: "userFeature",
+          config: { featureId, userId },
+          pattern: `${date}`,
+        }
+        let { name, schema } = OTHER_MODULES["jobs"] || {}
+        let jobsModel = getModel(orgid, name, schema)
+        await jobsModel.create(jobData, (err) => {
+          if (err) {
+            //
+          }
+        })
+      }
     }
   }
 }

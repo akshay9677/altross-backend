@@ -55,7 +55,11 @@ class UserFeature extends ModuleBase {
       let { conditions, conditionMatcher } = featureRecord
       let status
 
-      if (!isEmpty(conditions) && !isEmpty(conditionMatcher)) {
+      if (
+        !isEmpty(conditions) &&
+        !isEmpty(conditionMatcher) &&
+        !isEmpty(resource)
+      ) {
         let conditionsSatisfiedArray = conditions.map((condition) => {
           let { key, value, operator, dataType, featureGroup } = condition
           let actualValue = resource[key]
