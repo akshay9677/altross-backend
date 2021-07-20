@@ -54,17 +54,25 @@ class Users extends AssociationModuleBase {
         let { [nativeField]: id, [featureGroupName]: featureGroupId } = req.body
         // update the user with this feature group as lookup
         let usersModel = this.getCurrDBModel(orgid)
-        let userRecord = await usersModel.findOneAndUpdate(
-          { userId: id },
-          { featureGroup: featureGroupId }
-        )
-        // update the user id and get the current feature group record
-        let currFeatureGroup = await featureGroupModel.findOneAndUpdate(
-          {
-            id: featureGroupId,
+        let userRecord = await this.updateHandler({
+          orgid,
+          currModel: usersModel,
+          param: {
+            condition: { userId: id },
+            data: { featureGroup: featureGroupId },
           },
-          { users: userRecord.id }
-        )
+          moduleName: this.moduleName,
+          executeMiddleWare: true,
+        })
+
+        let actualRecord = {
+          ...userRecord._doc,
+        }
+        this.createLookupRecords(actualRecord, usersModel, orgid)
+        let currFeatureGroup = await featureGroupModel.findOne({
+          id: featureGroupId,
+        })
+
         // get all features for the feature ids in the current feature group
         let { features } = currFeatureGroup
         let featuresModel = getModel(
@@ -155,16 +163,23 @@ class Users extends AssociationModuleBase {
           req.body
         // update the user with this feature group as lookup
         let usersModel = this.getCurrDBModel(orgid)
-        await usersModel.findOneAndUpdate(
-          { userId: userId },
-          { $set: { featureGroup: [] } }
-        )
+        let userRecord = await this.updateHandler({
+          orgid,
+          currModel: usersModel,
+          param: {
+            condition: { userId: userId },
+            data: { $set: { featureGroup: [] } },
+          },
+          moduleName: this.moduleName,
+          executeMiddleWare: true,
+        })
+        let { id: currUserid } = userRecord._doc
         // update the user id and get the current feature group record
         let currFeatureGroup = await featureGroupModel.findOneAndUpdate(
           {
             id: featureGroupId,
           },
-          { $set: { users: [] } }
+          { $pull: { users: currUserid } }
         )
         // get all features for the feature ids in the current feature group
         let { features } = currFeatureGroup

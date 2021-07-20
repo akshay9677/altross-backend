@@ -3,6 +3,7 @@ import { getModel } from "../getModel"
 import { isEmpty, getId } from "../../utils/validation"
 import { executeEventMiddleWare } from "../automations/event-middleware/execute.middleware"
 import _ from "lodash"
+import dlv from "dlv"
 
 class ModuleBase {
   constructor(props) {
@@ -24,9 +25,7 @@ class ModuleBase {
   }
 
   getMultiLookups(currModel) {
-    let {
-      schema: { paths },
-    } = currModel || {}
+    let paths = dlv(currModel, "schema.paths")
     let fields = Object.keys(paths).filter((field) => {
       let { options } = paths[field] || {}
       let { lookup } = options || {}
@@ -183,7 +182,7 @@ class ModuleBase {
           let currLookupModel = getModel(orgid, name, schema)
           let updatePromise = currLookupModel.updateMany(
             { id: { $in: record[lookup] } },
-            { $addToSet: { [this.modelName]: id } }
+            { $addToSet: { [this.modelName]: [id] } }
           )
 
           promise.push(updatePromise)
@@ -223,7 +222,9 @@ class ModuleBase {
     executeMiddleWare,
   }) {
     let { condition, data } = param
-    let record = await currModel.findOneAndUpdate(condition, data)
+    let record = await currModel.findOneAndUpdate(condition, data, {
+      new: true,
+    })
 
     if (isEmpty(record)) throw new Error("No record found for the given ID")
 
@@ -239,7 +240,7 @@ class ModuleBase {
     return record
   }
 
-  async removeLookupRecords(oldRecord, newRecord, currModel, orgid) {
+  async removeLookupRecords(oldRecord = {}, newRecord = {}, currModel, orgid) {
     let lookups = this.getMultiLookups(currModel)
     let promise = []
 
