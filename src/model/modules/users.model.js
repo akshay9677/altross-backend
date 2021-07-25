@@ -15,9 +15,15 @@ export const UsersSchema = new mongoose.Schema({
     required: true,
     id: 2,
     displayName: "Name",
+    displayType: "TEXT",
     primaryField: true,
   },
-  description: { type: String, id: 3, displayName: "Description" },
+  description: {
+    type: String,
+    id: 3,
+    displayName: "Description",
+    displayType: "TEXT",
+  },
   userId: {
     type: String,
     required: true,
@@ -26,8 +32,8 @@ export const UsersSchema = new mongoose.Schema({
     displayName: "User Id",
     displayType: "COPY",
   },
-  email: { type: String, id: 5, displayName: "Email" },
-  phone: { type: String, id: 6, displayName: "Phone" },
+  email: { type: String, id: 5, displayName: "Email", displayType: "TEXT" },
+  phone: { type: String, id: 6, displayName: "Phone", displayType: "NUMBER" },
   projects: { type: Array, id: 8, lookup: true },
   featureGroup: {
     type: Array,

@@ -15,9 +15,15 @@ export const FeatureGroupModel = new mongoose.Schema({
     required: true,
     id: 2,
     displayName: "Name",
+    displayType: "TEXT",
     primaryField: true,
   },
-  description: { type: String, id: 3, displayName: "Description" },
+  description: {
+    type: String,
+    id: 3,
+    displayName: "Description",
+    displayType: "TEXT",
+  },
   tags: { type: Array, id: 4, displayName: "Tags", displayType: "TAG" },
   projects: { type: Array, id: 5, lookup: true },
   users: {

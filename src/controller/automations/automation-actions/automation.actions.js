@@ -2,6 +2,7 @@ import { isEmpty } from "../../../utils/validation"
 import { OTHER_MODULES } from "../../../utils/moduleSchemas"
 import { getModel } from "../../getModel"
 import { getId } from "../../../utils/validation"
+import nodeMailer from "nodemailer"
 
 const ACTIONS_HASH = {
   1: async ({ recordContext, currModel, action }) => {
@@ -27,6 +28,32 @@ const ACTIONS_HASH = {
     )
     await notificationModel.create(param)
     return param
+  },
+  3: async ({ action }) => {
+    let { actionDetails } = action || {}
+    let { to, subject, title } = actionDetails
+    let transporter = nodeMailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.MAIN_EMAIL,
+        pass: process.env.EMAIL_PWD,
+      },
+    })
+    let mailOptions = {
+      from: process.env.MAIN_EMAIL,
+      to: to,
+      subject: title,
+      html: subject,
+    }
+
+    let data = { message: "Email sent successfully" }
+
+    transporter.sendMail(mailOptions, function (error) {
+      if (error) {
+        data = error
+      }
+    })
+    return data
   },
 }
 

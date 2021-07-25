@@ -15,9 +15,15 @@ export const FeaturesModel = new mongoose.Schema({
     required: true,
     id: 2,
     displayName: "Name",
+    displayType: "TEXT",
     primaryField: true,
   },
-  description: { type: String, id: 3, displayName: "Description" },
+  description: {
+    type: String,
+    id: 3,
+    displayName: "Description",
+    displayType: "TEXT",
+  },
   owner: { type: String, id: 4, displayName: "Owner", displayType: "USER" },
   featureId: {
     type: String,

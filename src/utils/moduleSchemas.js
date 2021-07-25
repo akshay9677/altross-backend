@@ -13,22 +13,28 @@ export const MODULES = {
   projects: {
     name: "projects",
     schema: ProjectSchema,
+    displayName: "Projects",
   },
   users: {
     name: "users",
     schema: UsersSchema,
+    displayName: "Users",
   },
   features: {
     name: "features",
     schema: FeaturesModel,
+    displayName: "Features",
   },
   userFeature: {
     name: "userFeature",
     schema: UserFeatureSchema,
+    displayName: "User Features",
+    hidden: true,
   },
   featureGroup: {
     name: "featureGroup",
     schema: FeatureGroupModel,
+    displayName: "Feature Groups",
   },
 }
 

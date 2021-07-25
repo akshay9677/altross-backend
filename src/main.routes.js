@@ -15,6 +15,8 @@ import features from "./routes/modules/features.routes"
 import userFeature from "./routes/modules/userFeature.routes"
 import featureGroup from "./routes/modules/featureGroup.routes"
 
+import moduleMeta from "./routes/meta/modulemeta.routes"
+
 app.use("/v1", workflows)
 app.use("/v1", forms)
 app.use("/v1", fields)
@@ -26,5 +28,7 @@ app.use("/v1", features)
 app.use("/v1", userFeature)
 app.use("/v1", featureGroup)
 app.use("/v1", notifications)
+
+app.use("/v1", moduleMeta)
 
 export default app

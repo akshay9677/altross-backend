@@ -58,7 +58,7 @@ class ModuleBase {
           .skip(Math.abs(perPage * page))
           .limit(perPage)
       }
-      totalCount = records.length
+      totalCount = await currModel.countDocuments()
 
       records = records.map((record) => {
         let { _id } = record || {}
