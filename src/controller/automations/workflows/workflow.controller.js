@@ -7,6 +7,7 @@ class Workflows extends ModuleBase {
       model: WorkflowSchema,
       modelName: "Workflows",
       moduleName: "Workflows",
+      hideWorkflow: true,
     })
   }
 }

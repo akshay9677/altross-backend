@@ -8,6 +8,7 @@ import fields from "./routes/forms/fields.routes"
 import views from "./routes/views/views.routes"
 import pages from "./routes/pages/pages.routes"
 import notifications from "./routes/workflows/notification.routes"
+import jobs from "./routes/other/jobs.routes"
 
 import projects from "./routes/modules/projects.routes"
 import users from "./routes/modules/users.routes"
@@ -28,6 +29,7 @@ app.use("/v1", features)
 app.use("/v1", userFeature)
 app.use("/v1", featureGroup)
 app.use("/v1", notifications)
+app.use("/v1", jobs)
 
 app.use("/v1", moduleMeta)
 

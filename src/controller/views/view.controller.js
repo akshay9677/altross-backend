@@ -100,8 +100,13 @@ class Views extends ModuleBase {
       id: { $in: fieldIds },
       moduleName,
     })
-
-    let { paths } = MODULES[moduleName].schema || {}
+    let moduleObj
+    if (isEmpty(MODULES[moduleName])) {
+      moduleObj = OTHER_MODULES[moduleName]
+    } else {
+      moduleObj = MODULES[moduleName]
+    }
+    let { paths } = moduleObj.schema || {}
     let moduleFields = Object.keys(paths)
       .filter((field) => !["__v", "_id"].includes(field))
       .map((field) => {
