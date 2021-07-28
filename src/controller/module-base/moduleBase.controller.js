@@ -2,6 +2,7 @@ import { errorResponse } from "../../utils/responsehandler"
 import { getModel } from "../getModel"
 import { isEmpty, getId } from "../../utils/validation"
 import { executeEventMiddleWare } from "../automations/event-middleware/execute.middleware"
+import { MODULES } from "../../utils/moduleSchemas"
 import _ from "lodash"
 import dlv from "dlv"
 
@@ -163,26 +164,28 @@ class ModuleBase {
   // Create Record Handler
   async createHandler({ orgid, currModel, param }) {
     const record = await currModel.create(param)
-    await this.createLookupRecords(record, currModel, orgid)
+    await this.createLookupRecords(record, currModel, orgid, this.moduleName)
 
     if (!isEmpty(record) && !isEmpty(this.moduleName) && !this.hideWorkflow)
       executeEventMiddleWare(param, "create", this.moduleName, orgid)
 
     return record
   }
-  async createLookupRecords(record, currModel, orgid) {
+  async createLookupRecords(record, currModel, orgid, currModuleName) {
     let lookups = this.getMultiLookups(currModel)
     let { id } = record
     let promise = []
     let { lookupHash } = this
-    if (!isEmpty(lookups) && !isEmpty(lookupHash)) {
+    if (!isEmpty(lookups)) {
       lookups.forEach((lookup) => {
-        if (!isEmpty(record[lookup]) && !isEmpty(lookupHash[lookup])) {
-          let { name, schema } = lookupHash[lookup]
+        if (!isEmpty(record[lookup])) {
+          let { name, schema } = !isEmpty(lookupHash[lookup])
+            ? lookupHash[lookup]
+            : MODULES[lookup]
           let currLookupModel = getModel(orgid, name, schema)
           let updatePromise = currLookupModel.updateMany(
             { id: { $in: record[lookup] } },
-            { $addToSet: { [this.modelName]: [id] } }
+            { $addToSet: { [currModuleName]: [id] } }
           )
 
           promise.push(updatePromise)
@@ -236,13 +239,19 @@ class ModuleBase {
         orgid
       )
     }
-
     return record
   }
 
-  async removeLookupRecords(oldRecord = {}, newRecord = {}, currModel, orgid) {
+  async removeLookupRecords(
+    oldRecord = {},
+    newRecord = {},
+    currModel,
+    orgid,
+    currModuleName
+  ) {
     let lookups = this.getMultiLookups(currModel)
     let promise = []
+    let { lookupHash } = this
 
     for (let lookup of lookups) {
       let oldRecordLookup = oldRecord[lookup]
@@ -255,18 +264,19 @@ class ModuleBase {
         oldRecordLookup.length > newRecordLookup.length
       ) {
         let diff = _.difference(oldRecordLookup, newRecordLookup)
-        let { name, schema } = this.lookupHash[lookup] || {}
-        if (this.lookupHash[lookup]) {
-          let currLookupModel = getModel(orgid, name, schema)
-          let updatePromise = await currLookupModel.updateMany(
-            {
-              id: { $in: diff },
-            },
-            { $pull: { [this.modelName.toLowerCase()]: id } }
-          )
+        let { name, schema } = !isEmpty(lookupHash[lookup])
+          ? lookupHash[lookup]
+          : MODULES[lookup]
+        let currLookupModel = getModel(orgid, name, schema)
+        diff = diff.filter((val) => !isEmpty(val))
+        let updatePromise = await currLookupModel.updateMany(
+          {
+            id: { $in: diff },
+          },
+          { $pull: { [currModuleName]: id } }
+        )
 
-          promise.push(updatePromise)
-        }
+        promise.push(updatePromise)
       }
     }
     return Promise.all(promise)
@@ -278,6 +288,16 @@ class ModuleBase {
       let currModel = this.getCurrDBModel(orgid)
       let param = req.body
       let { id, data } = param
+
+      let oldRecord = await currModel.findOne({ id })
+      await this.removeLookupRecords(
+        oldRecord,
+        data,
+        currModel,
+        orgid,
+        this.moduleName
+      )
+
       let record = await this.updateHandler({
         orgid,
         currModel,
@@ -285,10 +305,14 @@ class ModuleBase {
         moduleName: this.moduleName,
         executeMiddleWare: !this.hideWorkflow,
       })
-      await this.removeLookupRecords(record, data, currModel, orgid)
 
       let actualRecord = { ...record._doc, ...data }
-      await this.createLookupRecords(actualRecord, currModel, orgid)
+      await this.createLookupRecords(
+        actualRecord,
+        currModel,
+        orgid,
+        this.moduleName
+      )
       return res.status(200).json({
         data: actualRecord,
         error: null,

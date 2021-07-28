@@ -29,5 +29,8 @@ router
 router
   .route("/modules/dissociate/users")
   .post((...args) => users.dissociate(...args))
+router
+  .route("/modules/hasPermission/users")
+  .post((...args) => users.isActive(...args))
 
 export default router

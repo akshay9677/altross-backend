@@ -5,6 +5,7 @@ const LookupHash = {
   users: { ...MODULES.users, preFill: true },
   features: { ...MODULES.features, preFill: true },
   projects: { ...MODULES.projects },
+  userGroup: { ...MODULES.userGroup, preFill: true },
 }
 
 class FeatureGroup extends ModuleBase {
