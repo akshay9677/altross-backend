@@ -52,14 +52,26 @@ class ModuleBase {
           .sort(sort)
           .skip(Math.abs(perPage * page))
           .limit(perPage)
+        totalCount = await currModel
+          .find()
+          .sort(sort)
+          .skip(Math.abs(perPage * page))
+          .limit(perPage)
+          .countDocuments()
       } else {
         records = await currModel
           .find(filter)
           .sort(sort)
           .skip(Math.abs(perPage * page))
           .limit(perPage)
+
+        totalCount = await currModel
+          .find(filter)
+          .sort(sort)
+          .skip(Math.abs(perPage * page))
+          .limit(perPage)
+          .countDocuments()
       }
-      totalCount = await currModel.countDocuments()
 
       records = records.map((record) => {
         let { _id } = record || {}
@@ -204,7 +216,18 @@ class ModuleBase {
 
       param = { ...param, id: totalCount + 1 }
 
+      if (!isEmpty(this.beforeCreateHook)) {
+        await this.beforeCreateHook({ data: param, orgid })
+      }
+
       let record = await this.createHandler({ orgid, currModel, param })
+
+      if (!isEmpty(this.afterCreateHook)) {
+        await this.afterCreateHook({
+          data: { ...param, id: totalCount + 1 },
+          orgid,
+        })
+      }
 
       return res.status(200).json({
         data: record,
@@ -225,6 +248,16 @@ class ModuleBase {
     executeMiddleWare,
   }) {
     let { condition, data } = param
+    let oldRecord = await currModel.findOne(condition)
+
+    await this.removeLookupRecords(
+      oldRecord,
+      data,
+      currModel,
+      orgid,
+      moduleName
+    )
+
     let record = await currModel.findOneAndUpdate(condition, data, {
       new: true,
     })
@@ -239,6 +272,10 @@ class ModuleBase {
         orgid
       )
     }
+
+    let actualRecord = { ...record._doc, ...data }
+    await this.createLookupRecords(actualRecord, currModel, orgid, moduleName)
+
     return record
   }
 
@@ -257,13 +294,9 @@ class ModuleBase {
       let oldRecordLookup = oldRecord[lookup]
       let newRecordLookup = newRecord[lookup]
       let { id } = oldRecord
+      let diff = _.difference(oldRecordLookup, newRecordLookup)
 
-      if (
-        oldRecordLookup &&
-        newRecordLookup &&
-        oldRecordLookup.length > newRecordLookup.length
-      ) {
-        let diff = _.difference(oldRecordLookup, newRecordLookup)
+      if (oldRecordLookup && newRecordLookup && !isEmpty(diff)) {
         let { name, schema } = !isEmpty(lookupHash[lookup])
           ? lookupHash[lookup]
           : MODULES[lookup]
@@ -289,14 +322,9 @@ class ModuleBase {
       let param = req.body
       let { id, data } = param
 
-      let oldRecord = await currModel.findOne({ id })
-      await this.removeLookupRecords(
-        oldRecord,
-        data,
-        currModel,
-        orgid,
-        this.moduleName
-      )
+      if (!isEmpty(this.beforeUpdateHook)) {
+        await this.beforeUpdateHook({ data, orgid, condition: { id } })
+      }
 
       let record = await this.updateHandler({
         orgid,
@@ -306,15 +334,12 @@ class ModuleBase {
         executeMiddleWare: !this.hideWorkflow,
       })
 
-      let actualRecord = { ...record._doc, ...data }
-      await this.createLookupRecords(
-        actualRecord,
-        currModel,
-        orgid,
-        this.moduleName
-      )
+      if (!isEmpty(this.afterUpdateHook)) {
+        await this.afterUpdateHook({ data, orgid, condition: { id } })
+      }
+
       return res.status(200).json({
-        data: actualRecord,
+        data: record,
         error: null,
       })
     } catch (error) {

@@ -1,6 +1,6 @@
 import ModuleBase from "../module-base/moduleBase.controller"
 import { MODULES } from "../../utils/moduleSchemas"
-import { getId, isEmpty } from "../../utils/validation"
+import { isEmpty } from "../../utils/validation"
 import { errorResponse } from "../../utils/responsehandler"
 import dlv from "dlv"
 import { getModel } from "../getModel"
@@ -22,101 +22,116 @@ class Users extends ModuleBase {
       moduleName: MODULES["users"].name,
     })
   }
-  async createRecord(req, res) {
-    try {
-      let { orgid } = req.headers
-      let currModel = this.getCurrDBModel(orgid)
-      let param = req.body
-      let totalCount = getId()
-
-      param = { ...param, id: totalCount + 1 }
-
-      if (!isEmpty(param.userGroup)) {
-        let additionalFields = await this.getFeatureValues(orgid, param)
-        param = { ...additionalFields, ...param }
-      }
-
-      let record = await this.createHandler({ orgid, currModel, param })
-
-      return res.status(200).json({
-        data: record,
-        error: null,
-      })
-    } catch (error) {
-      return res.status(200).json(errorResponse(error))
+  // only one user group and feature group
+  beforeCreateHook({ data }) {
+    if (!isEmpty(data.featureGroup)) {
+      let { featureGroup } = data || {}
+      if (featureGroup.length > 1)
+        throw new Error("A user can have only one feature group")
+    }
+    if (!isEmpty(data.userGroup)) {
+      let { userGroup } = data || {}
+      if (userGroup.length > 1)
+        throw new Error("A user can have only one user group")
     }
   }
+  // only one user group and feature group
+  async beforeUpdateHook({ data, condition, orgid }) {
+    let currModel = this.getCurrDBModel(orgid)
+    let currUserGroup = await currModel.findOne(condition)
+    if (
+      !isEmpty(data.featureGroup) &&
+      Array.isArray(data.featureGroup) &&
+      data.featureGroup.length > 1
+    ) {
+      throw new Error("A user can have only one feature group")
+    } else if (
+      !Array.isArray(data.featureGroup) &&
+      !isEmpty(currUserGroup.featureGroup) &&
+      !isEmpty(data.featureGroup)
+    ) {
+      throw new Error("A user can have only one feature group")
+    }
 
-  async updateRecord(req, res) {
-    try {
-      let { orgid } = req.headers
-      let currModel = this.getCurrDBModel(orgid)
-      let param = req.body
-      let { id, data } = param
-
-      if (!isEmpty(data.userGroup)) {
-        let additionalFields = await this.getFeatureValues(orgid, data)
-        data = { ...additionalFields, ...data }
-      }
-
-      let oldRecord = await currModel.findOne({ id })
-      await this.removeLookupRecords(
-        oldRecord,
-        data,
-        currModel,
-        orgid,
-        this.moduleName
-      )
-
-      let record = await this.updateHandler({
-        orgid,
-        currModel,
-        param: { condition: { id }, data },
-        moduleName: this.moduleName,
-        executeMiddleWare: !this.hideWorkflow,
-      })
-
-      let actualRecord = { ...record._doc, ...data }
-      await this.createLookupRecords(
-        actualRecord,
-        currModel,
-        orgid,
-        this.moduleName
-      )
-      return res.status(200).json({
-        data: actualRecord,
-        error: null,
-      })
-    } catch (error) {
-      return res.status(200).json(errorResponse(error))
+    if (
+      !isEmpty(data.userGroup) &&
+      Array.isArray(data.userGroup) &&
+      data.userGroup.length > 1
+    ) {
+      throw new Error("A user can have only one user group")
+    } else if (
+      !Array.isArray(data.userGroup) &&
+      !isEmpty(currUserGroup.userGroup) &&
+      !isEmpty(data.userGroup)
+    ) {
+      throw new Error("A user can have only one user group")
     }
   }
-  async getFeatureValues(orgid, param) {
-    let userGroupId = dlv(param, "userGroup.0")
+  async afterCreateHook({ data, orgid }) {
+    let featureGroupId
+    if (!isEmpty(data.userGroup)) {
+      let { name: userGroupName, schema: userGroupSchema } =
+        MODULES["userGroup"] || {}
+      let userGroupModel = getModel(orgid, userGroupName, userGroupSchema)
+      let userGroupRecord = await userGroupModel.findOne({
+        id: dlv(data, "userGroup.0"),
+      })
 
-    let { name: userGroupName, schema: userGroupSchema } =
-      MODULES["userGroup"] || {}
-    let userGroupModel = getModel(orgid, userGroupName, userGroupSchema)
-    let currUserGroup = await userGroupModel.findOne({ id: userGroupId })
+      let currFeatureGroup = dlv(userGroupRecord, "featureGroup.0")
+      featureGroupId = currFeatureGroup
+    }
 
-    let featureGroupId = dlv(currUserGroup, "featureGroup.0")
+    if (isEmpty(featureGroupId) && !isEmpty(data.featureGroup)) {
+      featureGroupId = dlv(data, "featureGroup.0")
+    }
 
-    let { name: featureGroupName, schema: featureGroupSchema } =
-      MODULES["featureGroup"] || {}
-    let featureGroupModel = getModel(
-      orgid,
-      featureGroupName,
-      featureGroupSchema
-    )
-    let currFeatureGroup = await featureGroupModel.findOne({
-      id: featureGroupId,
+    if (!isEmpty(featureGroupId) && !isEmpty(data.id)) {
+      let { name: featureGroupName, schema: featureGroupSchema } =
+        MODULES["featureGroup"] || {}
+      let featureGroupModel = getModel(
+        orgid,
+        featureGroupName,
+        featureGroupSchema
+      )
+
+      let featureGroupRecord = await featureGroupModel.findOne({
+        id: featureGroupId,
+      })
+
+      let features = dlv(featureGroupRecord, "features")
+
+      if (!isEmpty(features) && !isEmpty(data.id))
+        this.updateUsersWithFeatures({
+          users: [data.id],
+          features,
+          featureGroup: featureGroupId,
+          orgid,
+        })
+    }
+  }
+  async afterUpdateHook({ data, orgid, condition }) {
+    await this.afterCreateHook({ data: { ...data, ...condition }, orgid })
+  }
+  async updateUsersWithFeatures({ users, features, featureGroup, orgid }) {
+    let { name: usersName, schema: usersSchema } = MODULES["users"] || {}
+    let usersModel = getModel(orgid, usersName, usersSchema)
+    let params = {}
+
+    if (!isEmpty(features)) params["features"] = features
+    if (!isEmpty(featureGroup)) params["featureGroup"] = [featureGroup]
+
+    users.forEach(async (user) => {
+      await this.updateHandler({
+        orgid,
+        currModel: usersModel,
+        param: {
+          condition: { id: user },
+          data: params,
+        },
+        moduleName: usersName,
+        executeMiddleWare: true,
+      })
     })
-
-    let features = dlv(currFeatureGroup, "features")
-
-    if (!isEmpty(features) && !isEmpty(featureGroupId))
-      return { features, featureGroup: [featureGroupId] }
-    else return {}
   }
   async isActive(req, res) {
     try {

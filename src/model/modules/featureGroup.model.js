@@ -47,4 +47,11 @@ export const FeatureGroupModel = new mongoose.Schema({
     displayName: "User Group",
     displayType: "MULTI_LOOKUP",
   },
+  type: { type: String, displayName: "Group Type", enum: ["GLOBAL", "UNIQUE"] },
+  createdFrom: {
+    type: Array,
+    displayName: "User Group Scope",
+    displayType: "MULTI_LOOKUP",
+    immutable: true,
+  },
 })
