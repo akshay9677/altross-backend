@@ -6,6 +6,9 @@ import { errorResponse } from "../../utils/responsehandler"
 
 const LookupHash = {
   users: { ...MODULES.users },
+  userGroup: { ...MODULES.userGroup },
+  featureGroup: { ...MODULES.featureGroup },
+  features: { ...MODULES.features },
 }
 
 class Projects extends ModuleBase {

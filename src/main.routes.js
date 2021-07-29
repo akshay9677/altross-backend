@@ -15,6 +15,7 @@ import users from "./routes/modules/users.routes"
 import features from "./routes/modules/features.routes"
 import userFeature from "./routes/modules/userFeature.routes"
 import featureGroup from "./routes/modules/featureGroup.routes"
+import userGroup from "./routes/modules/userGroup.routes"
 
 import moduleMeta from "./routes/meta/modulemeta.routes"
 
@@ -28,6 +29,7 @@ app.use("/v1", users)
 app.use("/v1", features)
 app.use("/v1", userFeature)
 app.use("/v1", featureGroup)
+app.use("/v1", userGroup)
 app.use("/v1", notifications)
 app.use("/v1", jobs)
 

@@ -1,6 +1,6 @@
 import mongoose from "mongoose"
 
-export const FeatureGroupModel = new mongoose.Schema({
+export const UserGroupModel = new mongoose.Schema({
   id: {
     type: Number,
     required: true,
@@ -33,25 +33,11 @@ export const FeatureGroupModel = new mongoose.Schema({
     displayName: "Users",
     displayType: "MULTI_LOOKUP",
   },
-  features: {
+  featureGroup: {
     type: Array,
     id: 7,
     lookup: true,
-    displayName: "Features",
+    displayName: "Feature Group",
     displayType: "MULTI_LOOKUP",
-  },
-  userGroup: {
-    type: Array,
-    id: 8,
-    lookup: true,
-    displayName: "User Group",
-    displayType: "MULTI_LOOKUP",
-  },
-  type: { type: String, displayName: "Group Type", enum: ["GLOBAL", "UNIQUE"] },
-  createdFrom: {
-    type: Array,
-    displayName: "User Group Scope",
-    displayType: "MULTI_LOOKUP",
-    immutable: true,
   },
 })

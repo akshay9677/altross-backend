@@ -6,6 +6,7 @@ import { UsersSchema } from "../model/modules/users.model"
 import { FeaturesModel } from "../model/modules/features.model"
 import { UserFeatureSchema } from "../model/modules/userFeature.model"
 import { FeatureGroupModel } from "../model/modules/featureGroup.model"
+import { UserGroupModel } from "../model/modules/userGroup.model"
 import { NotificationSchema } from "../model/workflows/notifications.model"
 import { JobsSchema } from "../model/other/jobs.model"
 
@@ -35,6 +36,11 @@ export const MODULES = {
     name: "featureGroup",
     schema: FeatureGroupModel,
     displayName: "Feature Groups",
+  },
+  userGroup: {
+    name: "userGroup",
+    schema: UserGroupModel,
+    displayName: "User Group",
   },
 }
 

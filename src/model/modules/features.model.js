@@ -44,4 +44,11 @@ export const FeaturesModel = new mongoose.Schema({
     enum: ["CUSTOM", "MATCH_ALL", "MATCH_ANY"],
   },
   schedules: { type: Array, id: 12 },
+  users: {
+    type: Array,
+    id: 13,
+    lookup: true,
+    displayName: "Users",
+    displayType: "MULTI_LOOKUP",
+  },
 })

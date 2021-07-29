@@ -1,318 +1,252 @@
-import AssociationModuleBase from "../module-base/associateModule.controller"
-import { MODULES, OTHER_MODULES } from "../../utils/moduleSchemas"
+import ModuleBase from "../module-base/moduleBase.controller"
+import { MODULES } from "../../utils/moduleSchemas"
 import { isEmpty } from "../../utils/validation"
-import { getModel } from "../getModel"
 import { errorResponse } from "../../utils/responsehandler"
-import { cancelJob } from "../../utils/jobs.utils"
 import dlv from "dlv"
-import nodeSchedule from "node-schedule"
+import { getModel } from "../getModel"
+import { OPERATOR_HASH } from "../automations/workflows/workflow.execution"
 
 const LookupHash = {
   projects: { ...MODULES.projects },
   featureGroup: { ...MODULES.featureGroup, preFill: true },
+  userGroup: { ...MODULES.userGroup, preFill: true },
+  features: { ...MODULES.features, preFill: true },
 }
 
-const AssociationHash = {
-  features: {
-    nativeField: "userId",
-    foreignField: "featureId",
-    foreignModule: MODULES["features"],
-    associationModule: MODULES["userFeature"],
-  },
-}
-
-class Users extends AssociationModuleBase {
+class Users extends ModuleBase {
   constructor() {
     super({
       model: MODULES["users"].schema,
       modelName: MODULES["users"].name,
       lookupHash: LookupHash,
       moduleName: MODULES["users"].name,
-      associationHash: AssociationHash,
     })
   }
-  async associate(req, res) {
-    try {
-      let { orgid } = req.headers
-
-      let { moduleName } = req.body
-      let { associationHash } = this
-      let records
-
-      // feature group association
-      if (moduleName === MODULES["featureGroup"].name) {
-        // get feature group model
-        let { name: featureGroupName, schema: featureGroupSchema } =
-          MODULES["featureGroup"]
-        let featureGroupModel = getModel(
-          orgid,
-          featureGroupName,
-          featureGroupSchema
-        )
-        let { nativeField, foreignField, foreignModule } =
-          associationHash["features"] || {}
-        let { [nativeField]: id, [featureGroupName]: featureGroupId } = req.body
-        // update the user with this feature group as lookup
-        let usersModel = this.getCurrDBModel(orgid)
-        let userRecord = await this.updateHandler({
-          orgid,
-          currModel: usersModel,
-          param: {
-            condition: { userId: id },
-            data: { featureGroup: featureGroupId },
-          },
-          moduleName: this.moduleName,
-          executeMiddleWare: true,
-        })
-
-        let actualRecord = {
-          ...userRecord._doc,
-        }
-        this.createLookupRecords(actualRecord, usersModel, orgid)
-        let currFeatureGroup = await featureGroupModel.findOne({
-          id: featureGroupId,
-        })
-
-        // get all features for the feature ids in the current feature group
-        let { features } = currFeatureGroup
-        let featuresModel = getModel(
-          orgid,
-          MODULES["features"].name,
-          MODULES["features"].schema
-        )
-        let featuresList = await featuresModel.find({ id: { $in: features } })
-        let foriegnIds = featuresList.map(
-          (currFeature) => currFeature.featureId
-        )
-
-        // use that features and get the featureIds list and call associate record with
-        // that feature ids and the user id from params
-
-        records = await this.associateRecords(
-          orgid,
-          id,
-          nativeField,
-          foriegnIds,
-          foreignModule,
-          foreignField
-        )
-        records = records.map((record) => {
-          return { ...record, featureGroup: featureGroupId }
-        })
-        moduleName = "features"
-      } else {
-        if (isEmpty(associationHash) || isEmpty(associationHash[moduleName])) {
-          throw new Error("No association module found")
-        }
-        let { nativeField, foreignField, foreignModule } =
-          associationHash[moduleName] || {}
-
-        let { [nativeField]: id, [foreignField]: foriegnIds } = req.body
-
-        if (isEmpty(id)) throw new Error("Record Id is required")
-
-        if (isEmpty(foriegnIds)) throw new Error("Association Ids are required")
-
-        records = await this.associateRecords(
-          orgid,
-          id,
-          nativeField,
-          foriegnIds,
-          foreignModule,
-          foreignField
-        )
-      }
-      let { associationModule } = associationHash[moduleName] || {}
-      let { name: associationModuleName } = associationModule || {}
-
-      let { name, schema } = MODULES[associationModuleName]
-      let associationModel = getModel(orgid, name, schema)
-
-      await associationModel.create(records, (err) => {
-        if (err) {
-          // if record already exists
-        }
-      })
-
-      return res.status(200).json({
-        data: records,
-        error: null,
-      })
-    } catch (error) {
-      return res.status(200).json(errorResponse(error))
+  // only one user group and feature group
+  beforeCreateHook({ data }) {
+    if (!isEmpty(data.featureGroup)) {
+      let { featureGroup } = data || {}
+      if (featureGroup.length > 1)
+        throw new Error("A user can have only one feature group")
+    }
+    if (!isEmpty(data.userGroup)) {
+      let { userGroup } = data || {}
+      if (userGroup.length > 1)
+        throw new Error("A user can have only one user group")
     }
   }
-  async dissociate(req, res) {
-    try {
-      let { orgid } = req.headers
-      let { moduleName } = req.body
-      let { associationHash } = this
-      let id, foriegnIds
-
-      if (moduleName === MODULES["featureGroup"].name) {
-        // get feature group model
-        let { name: featureGroupName, schema: featureGroupSchema } =
-          MODULES["featureGroup"]
-        let featureGroupModel = getModel(
-          orgid,
-          featureGroupName,
-          featureGroupSchema
-        )
-        let { nativeField } = associationHash["features"] || {}
-        let { [nativeField]: userId, [featureGroupName]: featureGroupId } =
-          req.body
-        // update the user with this feature group as lookup
-        let usersModel = this.getCurrDBModel(orgid)
-        let userRecord = await this.updateHandler({
-          orgid,
-          currModel: usersModel,
-          param: {
-            condition: { userId: userId },
-            data: { $set: { featureGroup: [] } },
-          },
-          moduleName: this.moduleName,
-          executeMiddleWare: true,
-        })
-        let { id: currUserid } = userRecord._doc
-        // update the user id and get the current feature group record
-        let currFeatureGroup = await featureGroupModel.findOneAndUpdate(
-          {
-            id: featureGroupId,
-          },
-          { $pull: { users: currUserid } }
-        )
-        // get all features for the feature ids in the current feature group
-        let { features } = currFeatureGroup
-        let featuresModel = getModel(
-          orgid,
-          MODULES["features"].name,
-          MODULES["features"].schema
-        )
-        let featuresList = await featuresModel.find({ id: { $in: features } })
-        id = userId
-        foriegnIds = featuresList.map((currFeature) => currFeature.featureId)
-        moduleName = "features"
-      } else {
-        let { nativeField, foreignField } = associationHash[moduleName] || {}
-
-        let { [nativeField]: idParam, [foreignField]: foriegnIdsParam } =
-          req.body
-
-        id = idParam
-        foriegnIds = foriegnIdsParam
-      }
-
-      if (isEmpty(id)) throw new Error("Record Id is required")
-
-      if (isEmpty(foriegnIds)) throw new Error("Association Ids are required")
-
-      let { associationModule, nativeField, foreignField } =
-        associationHash[moduleName] || {}
-      let { name: associationModuleName } = associationModule || {}
-      let { name, schema } = MODULES[associationModuleName]
-      let associationModel = getModel(orgid, name, schema)
-
-      foriegnIds.forEach((foreignid) => {
-        let name = `${id}${foreignid}`
-        cancelJob({ orgid, name })
-      })
-      await associationModel.deleteMany({
-        [nativeField]: id,
-        [foreignField]: { $in: foriegnIds },
-      })
-      return res.status(200).json({
-        data: "Records dissociated successfully",
-        error: null,
-      })
-    } catch (error) {
-      return res.status(200).json(errorResponse(error))
+  // only one user group and feature group
+  async beforeUpdateHook({ data, condition, orgid }) {
+    let currModel = this.getCurrDBModel(orgid)
+    let currUserGroup = await currModel.findOne(condition)
+    if (
+      !isEmpty(data.featureGroup) &&
+      Array.isArray(data.featureGroup) &&
+      data.featureGroup.length > 1
+    ) {
+      throw new Error("A user can have only one feature group")
+    } else if (
+      !Array.isArray(data.featureGroup) &&
+      !isEmpty(currUserGroup.featureGroup) &&
+      !isEmpty(data.featureGroup)
+    ) {
+      throw new Error("A user can have only one feature group")
     }
-  }
-  async getExtraProps(records) {
-    // association hash
-    let { associationHash, updateHandler } = this
-    let { associationModule } = associationHash["features"] || {}
-    let { name: associationModuleName } = associationModule || {}
-    let { name, schema } = MODULES[associationModuleName]
-    let orgid = dlv(records, "orgid")
-    let associationModel = getModel(orgid, name, schema)
-
-    // feature & user data
-    let features = dlv(records, "foreign.data")
-    let user = dlv(records, "native.data")
-    let currUserFeatureGroup = dlv(user, "featureGroup.0")
 
     if (
-      !isEmpty(currUserFeatureGroup) &&
-      !isEmpty(user) &&
-      !isEmpty(features)
+      !isEmpty(data.userGroup) &&
+      Array.isArray(data.userGroup) &&
+      data.userGroup.length > 1
     ) {
-      let { schedules } = features || {}
-      schedules = schedules.filter((schedule) => {
-        let { featureGroup } = schedule || {}
-        if (!isEmpty(featureGroup) && featureGroup === currUserFeatureGroup) {
-          return true
-        } else if (isEmpty(featureGroup)) {
-          return true
-        } else {
-          return false
-        }
-      })
-      let { term } = schedules[0] || {}
-      let job
-      let date = new Date()
-      let { featureId } = features || {}
-      let { userId } = user || {}
-      let uniqueName = `${userId}${featureId}`
-      if (term === "ANUALY") {
-        date.setFullYear(date.getFullYear() + 1)
-        job = nodeSchedule.scheduleJob(uniqueName, date, async function () {
-          let param = {
-            condition: { featureId, userId },
-            data: { status: "EXPIRED" },
-          }
-          updateHandler({
-            orgid,
-            currModel: associationModel,
-            param,
-            moduleName: "userFeature",
-            executeMiddleWare: true,
-          })
-        })
-      } else if (term === "MONTHLY") {
-        date.setMonth(date.getMonth() + 1)
-        job = nodeSchedule.scheduleJob(uniqueName, date, async function () {
-          let param = {
-            condition: { featureId, userId },
-            data: { status: "EXPIRED" },
-          }
-          updateHandler({
-            orgid,
-            currModel: associationModel,
-            param,
-            moduleName: "userFeature",
-            executeMiddleWare: true,
-          })
-        })
-      }
-      if (!isEmpty(job) && !isEmpty(job.pendingInvocations)) {
-        delete job.pendingInvocations
-        let jobData = {
-          name: uniqueName,
-          job,
-          moduleName: "userFeature",
-          config: { featureId, userId },
-          pattern: `${date}`,
-        }
-        let { name, schema } = OTHER_MODULES["jobs"] || {}
-        let jobsModel = getModel(orgid, name, schema)
-        await jobsModel.create(jobData, (err) => {
-          if (err) {
-            //
-          }
-        })
-      }
+      throw new Error("A user can have only one user group")
+    } else if (
+      !Array.isArray(data.userGroup) &&
+      !isEmpty(currUserGroup.userGroup) &&
+      !isEmpty(data.userGroup)
+    ) {
+      throw new Error("A user can have only one user group")
     }
+  }
+  async afterCreateHook({ data, orgid }) {
+    let featureGroupId
+    if (!isEmpty(data.userGroup)) {
+      let { name: userGroupName, schema: userGroupSchema } =
+        MODULES["userGroup"] || {}
+      let userGroupModel = getModel(orgid, userGroupName, userGroupSchema)
+      let userGroupRecord = await userGroupModel.findOne({
+        id: dlv(data, "userGroup.0"),
+      })
+
+      let currFeatureGroup = dlv(userGroupRecord, "featureGroup.0")
+      featureGroupId = currFeatureGroup
+    }
+
+    if (isEmpty(featureGroupId) && !isEmpty(data.featureGroup)) {
+      featureGroupId = dlv(data, "featureGroup.0")
+    }
+
+    if (!isEmpty(featureGroupId) && !isEmpty(data.id)) {
+      let { name: featureGroupName, schema: featureGroupSchema } =
+        MODULES["featureGroup"] || {}
+      let featureGroupModel = getModel(
+        orgid,
+        featureGroupName,
+        featureGroupSchema
+      )
+
+      let featureGroupRecord = await featureGroupModel.findOne({
+        id: featureGroupId,
+      })
+
+      let features = dlv(featureGroupRecord, "features")
+
+      if (!isEmpty(features) && !isEmpty(data.id))
+        this.updateUsersWithFeatures({
+          users: [data.id],
+          features,
+          featureGroup: featureGroupId,
+          orgid,
+        })
+    }
+  }
+  async afterUpdateHook({ data, orgid, condition }) {
+    await this.afterCreateHook({ data: { ...data, ...condition }, orgid })
+  }
+  async updateUsersWithFeatures({ users, features, featureGroup, orgid }) {
+    let { name: usersName, schema: usersSchema } = MODULES["users"] || {}
+    let usersModel = getModel(orgid, usersName, usersSchema)
+    let params = {}
+
+    if (!isEmpty(features)) params["features"] = features
+    if (!isEmpty(featureGroup)) params["featureGroup"] = [featureGroup]
+
+    users.forEach(async (user) => {
+      await this.updateHandler({
+        orgid,
+        currModel: usersModel,
+        param: {
+          condition: { id: user },
+          data: params,
+        },
+        moduleName: usersName,
+        executeMiddleWare: true,
+      })
+    })
+  }
+  async isActive(req, res) {
+    try {
+      let { orgid } = req.headers
+      let { userId, featureId, resource } = req.body
+
+      if (isEmpty(userId)) throw new Error("User Id is required")
+      if (isEmpty(featureId)) throw new Error("Feature Id is required")
+
+      let currStatus
+      // get feature group from user
+      let currModel = this.getCurrDBModel(orgid)
+      let userRecord = await currModel.findOne({ userId })
+      let currFeatureGroup = dlv(userRecord, "featureGroup.0", null)
+      // get conditions from feature record
+      let featuresModel = getModel(
+        orgid,
+        MODULES["features"].name,
+        MODULES["features"].schema
+      )
+      let featureRecord = await featuresModel.findOne({ featureId })
+
+      let { conditions, conditionMatcher } = featureRecord
+      let status
+
+      if (this.userFeatureCheck(userRecord, featureRecord)) {
+        currStatus = "ACTIVE"
+      } else {
+        currStatus = "EXPIRED"
+      }
+
+      if (
+        !isEmpty(conditions) &&
+        !isEmpty(conditionMatcher) &&
+        !isEmpty(resource)
+      ) {
+        let conditionsSatisfiedArray = conditions.map((condition) => {
+          let { key, value, operator, dataType, featureGroup } = condition
+          let actualValue = resource[key]
+          if (
+            isEmpty(featureGroup) ||
+            (!isEmpty(featureGroup) && featureGroup === currFeatureGroup)
+          ) {
+            if (
+              !isEmpty(OPERATOR_HASH[dataType]) &&
+              !isEmpty((OPERATOR_HASH[dataType] || {})[operator])
+            ) {
+              let selectedOperator = OPERATOR_HASH[dataType][operator]
+              return selectedOperator.action(actualValue, value)
+            }
+          } else {
+            return false
+          }
+        })
+
+        for (let i = 0; i < conditionMatcher.length; i++) {
+          let charAtIndex = conditionMatcher.charAt(i)
+          if (this.isNumeric(charAtIndex)) {
+            let actualVal =
+              conditionsSatisfiedArray[conditionMatcher.charAt(i) - 1]
+
+            if (!isEmpty(actualVal)) {
+              conditionMatcher = this.replaceChar(
+                conditionMatcher,
+                `${actualVal}`,
+                i
+              )
+            } else {
+              conditionMatcher = this.replaceChar(
+                conditionMatcher,
+                `${false}`,
+                i
+              )
+            }
+          }
+        }
+
+        conditionMatcher = conditionMatcher.replace(/and/g, "&&")
+        conditionMatcher = conditionMatcher.replace(/or/g, "||")
+
+        let finalStatus = eval(conditionMatcher)
+
+        if (finalStatus) {
+          status = "ACTIVE"
+        } else {
+          status = "EXPIRED"
+        }
+      } else {
+        status = currStatus
+      }
+
+      return res.status(200).json({
+        data: { status },
+        error: null,
+      })
+    } catch (error) {
+      return res.status(200).json(errorResponse(error))
+    }
+  }
+  userFeatureCheck(user, feature) {
+    let { features } = user || {}
+    let { id } = feature
+    return (features || []).includes(id)
+  }
+  isNumeric(str) {
+    if (typeof str != "string") return false
+    return !isNaN(str) && !isNaN(parseFloat(str))
+  }
+
+  replaceChar(origString, replaceChar, index) {
+    let firstPart = origString.substr(0, index)
+    let lastPart = origString.substr(index + 1)
+
+    let newString = firstPart + replaceChar + lastPart
+    return newString
   }
 }
 
