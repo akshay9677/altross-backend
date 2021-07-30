@@ -42,7 +42,7 @@ class FeatureGroup extends ModuleBase {
               id: currUserGrp,
             })
 
-            let currUsers = dlv(userGroupRecord, "users", [])
+            let currUsers = dlv(userGroupRecord, "adminUsers", [])
 
             users = [...users, ...currUsers]
             if (!isEmpty(users)) isUserChanged = true

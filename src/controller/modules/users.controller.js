@@ -78,7 +78,10 @@ class Users extends ModuleBase {
       })
 
       let currFeatureGroup = dlv(userGroupRecord, "featureGroup.0")
-      featureGroupId = currFeatureGroup
+      let { id } = data
+      let adminUsers = dlv(userGroupRecord, "adminUsers")
+
+      if (adminUsers.includes(id)) featureGroupId = currFeatureGroup
     }
 
     if (isEmpty(featureGroupId) && !isEmpty(data.featureGroup)) {
@@ -136,7 +139,7 @@ class Users extends ModuleBase {
   async isActive(req, res) {
     try {
       let { orgid } = req.headers
-      let { userId, featureId, resource } = req.body
+      let { userId, featureId, resource, actor } = req.body
 
       if (isEmpty(userId)) throw new Error("User Id is required")
       if (isEmpty(featureId)) throw new Error("Feature Id is required")
@@ -169,7 +172,8 @@ class Users extends ModuleBase {
         !isEmpty(resource)
       ) {
         let conditionsSatisfiedArray = conditions.map((condition) => {
-          let { key, value, operator, dataType, featureGroup } = condition
+          let { key, value, operator, dataType, featureGroup, actorKey } =
+            condition
           let actualValue = resource[key]
           if (
             isEmpty(featureGroup) ||
@@ -180,7 +184,12 @@ class Users extends ModuleBase {
               !isEmpty((OPERATOR_HASH[dataType] || {})[operator])
             ) {
               let selectedOperator = OPERATOR_HASH[dataType][operator]
-              return selectedOperator.action(actualValue, value)
+              if (!isEmpty(actor) && !isEmpty(actorKey)) {
+                let val = actor[actorKey]
+                return selectedOperator.action(actualValue, val)
+              } else {
+                return selectedOperator.action(actualValue, value)
+              }
             }
           } else {
             return false

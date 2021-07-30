@@ -22,16 +22,28 @@ class UserGroup extends ModuleBase {
   // only one feature group
   async beforeCreateHook({ data }) {
     if (!isEmpty(data.featureGroup)) {
-      let { featureGroup } = data || {}
+      let { featureGroup, adminUsers, users } = data || {}
       if (featureGroup.length > 1)
         throw new Error("A user group can have only one feature group")
+
+      let isInvalidUser
+      adminUsers.forEach((adminUser) => {
+        if (!users.includes(adminUser)) isInvalidUser = true
+      })
+
+      if (isInvalidUser)
+        throw new Error("A admin user is not a configured user for this group")
     }
   }
   // only one feature group
   async beforeUpdateHook({ data, condition, orgid }) {
     let currModel = this.getCurrDBModel(orgid)
     let currUserGroup = await currModel.findOne(condition)
-    let { featureGroup } = currUserGroup
+    let {
+      featureGroup,
+      users: currUsers,
+      adminUsers: currAdminUsers,
+    } = currUserGroup
     if (
       !isEmpty(data.featureGroup) &&
       Array.isArray(data.featureGroup) &&
@@ -45,24 +57,29 @@ class UserGroup extends ModuleBase {
     ) {
       throw new Error("A user group can have only one feature group")
     }
+
+    if (data.adminUsers)
+      currAdminUsers = [...currAdminUsers, ...data.adminUsers]
+    if (data.users) currUsers = [...currUsers, ...data.users]
+
+    let isInvalidUser
+    currAdminUsers.forEach((adminUser) => {
+      if (!currUsers.includes(adminUser)) isInvalidUser = true
+    })
+
+    if (isInvalidUser)
+      throw new Error("A admin user is not a configured user for this group")
   }
   async afterUpdateHook({ data, orgid, condition }) {
-    if (!isEmpty(data.users) || !isEmpty(data.featureGroup)) {
+    if (!isEmpty(data.adminUsers) || !isEmpty(data.featureGroup)) {
       let users, features, featureGroupId
       let currModel = this.getCurrDBModel(orgid)
       let currUserGroup = await currModel.findOne(condition)
 
-      if (!isEmpty(data.users)) {
-        users = data.users
-      } else {
-        users = currUserGroup.users
-      }
+      let adminUsers = dlv(currUserGroup, "adminUsers")
 
-      if (!isEmpty(data.featureGroup)) {
-        featureGroupId = dlv(data, "featureGroup.0")
-      } else {
-        featureGroupId = dlv(currUserGroup, "featureGroup.0")
-      }
+      users = adminUsers
+      featureGroupId = dlv(currUserGroup, "featureGroup.0")
 
       let { name: featureGroupName, schema: featureGroupSchema } =
         MODULES["featureGroup"] || {}
@@ -87,8 +104,14 @@ class UserGroup extends ModuleBase {
     }
   }
   async afterCreateHook({ data, orgid }) {
-    if (!isEmpty(data) && !isEmpty(data.featureGroup) && !isEmpty(data.users)) {
-      let { users } = data
+    if (
+      !isEmpty(data) &&
+      !isEmpty(data.featureGroup) &&
+      !isEmpty(data.users) &&
+      !isEmpty(data.adminUsers)
+    ) {
+      let adminUsers = dlv(data, "adminUsers")
+      let users = adminUsers
 
       let featureGroupId = dlv(data, "featureGroup.0")
 

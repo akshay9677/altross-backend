@@ -25,19 +25,23 @@ class Features extends ModuleBase {
   }
   async afterCreateHook({ data, orgid }) {
     if (!isEmpty(data.featureGroup) && !isEmpty(data.id)) {
-      let featureGroupId = dlv(data, "featureGroup.0")
-      let { name: featureGroupName, schema: featureGroupSchema } =
-        MODULES["featureGroup"] || {}
-      let featureGroupModel = getModel(
-        orgid,
-        featureGroupName,
-        featureGroupSchema
-      )
-      let featureGroupRecord = await featureGroupModel.findOne({
-        id: featureGroupId,
-      })
+      let { featureGroup } = data
+      let users = []
+      for (let featureGroupId of featureGroup) {
+        let { name: featureGroupName, schema: featureGroupSchema } =
+          MODULES["featureGroup"] || {}
+        let featureGroupModel = getModel(
+          orgid,
+          featureGroupName,
+          featureGroupSchema
+        )
+        let featureGroupRecord = await featureGroupModel.findOne({
+          id: featureGroupId,
+        })
 
-      let users = dlv(featureGroupRecord, "users")
+        let currUsers = dlv(featureGroupRecord, "users")
+        users = [...users, ...currUsers]
+      }
 
       if (!isEmpty(users))
         this.updateFeaturesWithUsers({ users, features: [data.id], orgid })

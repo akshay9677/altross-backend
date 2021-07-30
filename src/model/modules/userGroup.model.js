@@ -40,4 +40,11 @@ export const UserGroupModel = new mongoose.Schema({
     displayName: "Feature Group",
     displayType: "MULTI_LOOKUP",
   },
+  adminUsers: {
+    type: Array,
+    id: 8,
+    displayName: "Admins",
+    displayType: "RELATED_MULTI_LOOKUP",
+    relatedFieldName: "users",
+  },
 })
