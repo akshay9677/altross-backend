@@ -1,7 +1,7 @@
 {
   "name": "sms-backend",
   "version": "1.0.0",
-  "description": "Saas management system backend",
+  "description": "Permission management system backend",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon --exec babel-node src/index.js",

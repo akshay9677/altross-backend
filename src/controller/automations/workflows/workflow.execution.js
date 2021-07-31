@@ -3,6 +3,7 @@ import { getModel } from "../../getModel"
 import { MODULES } from "../../../utils/moduleSchemas"
 import ACTIONS_HASH from "../automation-actions/automation.actions"
 import mongoose from "mongoose"
+import _ from "lodash"
 
 export const OPERATOR_HASH = {
   Number: {
@@ -99,6 +100,26 @@ export const OPERATOR_HASH = {
       action: (recordValue) => !recordValue,
     },
   },
+  Array: {
+    40: {
+      name: "empty",
+      action: (recordValue) => isEmpty(recordValue),
+    },
+    41: {
+      name: "notempty",
+      action: (recordValue) => !isEmpty(recordValue),
+    },
+    42: {
+      name: "equal",
+      action: (recordValue, conditionValue) =>
+        _.isEqual(recordValue, conditionValue),
+    },
+    43: {
+      name: "notequal",
+      action: (recordValue, conditionValue) =>
+        !_.isEqual(recordValue, conditionValue),
+    },
+  },
 }
 
 const getMatchingWorkflows = async ({
@@ -106,7 +127,6 @@ const getMatchingWorkflows = async ({
   name,
   workflowSchema,
   moduleName,
-  paths,
   event,
 }) => {
   let workflowModel = getModel(orgid, name, workflowSchema)
@@ -114,21 +134,16 @@ const getMatchingWorkflows = async ({
   // find the workflow with module name, field type and name
   let moduleFieldMatchRecords = await workflowModel.find({
     moduleName: moduleName,
-    "conditions.field": {
-      $in: Object.keys(paths).filter((prop) => {
-        return prop !== "_id" || prop !== "__v"
-      }),
-    },
+    // "conditions.field": {
+    //   $in: Object.keys(paths).filter((prop) => {
+    //     return prop !== "_id" || prop !== "__v"
+    //   }),
+    // },
     event: event,
   })
 
   let defaultFieldMatchRecords = await defaultWorkflowmodel.find({
     moduleName: moduleName,
-    "conditions.field": {
-      $in: Object.keys(paths).filter((prop) => {
-        return prop !== "_id" || prop !== "__v"
-      }),
-    },
     event: event,
   })
   return [...defaultFieldMatchRecords, ...moduleFieldMatchRecords]
@@ -139,7 +154,8 @@ export const WorkflowExecution = async (
   event,
   moduleName,
   orgid,
-  { name, schema: workflowSchema }
+  { name, schema: workflowSchema },
+  currThis
 ) => {
   let currModel = getModel(
     orgid,
@@ -208,6 +224,11 @@ export const WorkflowExecution = async (
         }
       })
 
+      if (isEmpty(conditions)) {
+        conditionsSatisfiedArray = [true]
+        matchCondition === "or"
+      }
+
       if (matchCondition === "or") {
         let canExecuteAction = conditionsSatisfiedArray.some((value) => value)
         if (canExecuteAction) actionExecutionArray.push(...actions)
@@ -229,6 +250,7 @@ export const WorkflowExecution = async (
         event,
         moduleName: MODULES[moduleName].name,
         orgid,
+        currThis,
       })
     }
   })

@@ -179,7 +179,7 @@ class ModuleBase {
     await this.createLookupRecords(record, currModel, orgid, this.moduleName)
 
     if (!isEmpty(record) && !isEmpty(this.moduleName) && !this.hideWorkflow)
-      executeEventMiddleWare(param, "create", this.moduleName, orgid)
+      executeEventMiddleWare(param, "create", this.moduleName, orgid, this)
 
     return record
   }
@@ -269,7 +269,8 @@ class ModuleBase {
         { ...record._doc, ...data },
         "update",
         moduleName,
-        orgid
+        orgid,
+        this
       )
     }
 
@@ -354,7 +355,7 @@ class ModuleBase {
     if (this.beforeDeleteHook) this.beforeDeleteHook(records, orgid)
 
     if (!isEmpty(this.moduleName) && !this.hideWorkflow)
-      executeEventMiddleWare(records, "delete", this.moduleName, orgid)
+      executeEventMiddleWare(records, "delete", this.moduleName, orgid, this)
 
     await currModel.deleteMany({ id: { $in: id } })
 

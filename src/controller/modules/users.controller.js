@@ -157,7 +157,7 @@ class Users extends ModuleBase {
       )
       let featureRecord = await featuresModel.findOne({ featureId })
 
-      let { conditions, conditionMatcher } = featureRecord
+      let { conditions, conditionMatcher, users: featureUsers } = featureRecord
       let status
 
       if (this.userFeatureCheck(userRecord, featureRecord)) {
@@ -192,7 +192,10 @@ class Users extends ModuleBase {
               }
             }
           } else {
-            return false
+            let { id: currUserId } = userRecord
+
+            if (featureUsers.includes(currUserId)) return true
+            else return false
           }
         })
 

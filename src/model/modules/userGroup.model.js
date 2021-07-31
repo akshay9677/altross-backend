@@ -38,7 +38,7 @@ export const UserGroupModel = new mongoose.Schema({
     id: 7,
     lookup: true,
     displayName: "Feature Group",
-    displayType: "MULTI_LOOKUP",
+    displayType: "SINGLE_LOOKUP",
   },
   adminUsers: {
     type: Array,

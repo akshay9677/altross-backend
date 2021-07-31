@@ -5,12 +5,43 @@ import { getId } from "../../../utils/validation"
 import nodeMailer from "nodemailer"
 
 const ACTIONS_HASH = {
-  1: async ({ recordContext, currModel, action }) => {
+  1: async ({
+    recordContext,
+    action,
+    currThis,
+    orgid,
+    moduleName,
+    currModel,
+  }) => {
     let { id } = recordContext || {}
     let { actionDetails } = action || {}
     let { fieldChange } = actionDetails || {}
     if (!isEmpty(id) && !isEmpty(fieldChange)) {
-      let record = await currModel.findOneAndUpdate({ id }, fieldChange)
+      let { beforeUpdateHook, afterUpdateHook, updateHandler } = currThis
+
+      if (!isEmpty(beforeUpdateHook)) {
+        await beforeUpdateHook.call(currThis, {
+          data: fieldChange,
+          orgid,
+          condition: { id },
+        })
+      }
+
+      let record = await updateHandler.call(currThis, {
+        orgid,
+        currModel,
+        param: { condition: { id }, data: fieldChange },
+        moduleName: moduleName,
+        executeMiddleWare: true,
+      })
+
+      if (!isEmpty(afterUpdateHook)) {
+        await afterUpdateHook.call(currThis, {
+          data: fieldChange,
+          orgid,
+          condition: { id },
+        })
+      }
       return record
     }
   },

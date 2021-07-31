@@ -10,7 +10,13 @@ const AUTOMATION_MODULES = [
   },
 ]
 
-export const executeEventMiddleWare = (record, event, moduleName, orgid) => {
+export const executeEventMiddleWare = (
+  record,
+  event,
+  moduleName,
+  orgid,
+  currThis
+) => {
   AUTOMATION_MODULES.forEach((module) => {
     if (Array.isArray(record)) {
       record.forEach((currRecord) => {
@@ -19,11 +25,12 @@ export const executeEventMiddleWare = (record, event, moduleName, orgid) => {
           event,
           moduleName,
           orgid,
-          module
+          module,
+          currThis
         )
       })
     } else {
-      module.action(record, event, moduleName, orgid, module)
+      module.action(record, event, moduleName, orgid, module, currThis)
     }
   })
 }

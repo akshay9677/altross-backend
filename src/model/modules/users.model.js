@@ -40,14 +40,14 @@ export const UsersSchema = new mongoose.Schema({
     id: 9,
     lookup: true,
     displayName: "Feature Group",
-    displayType: "MULTI_LOOKUP",
+    displayType: "SINGLE_LOOKUP",
   },
   userGroup: {
     type: Array,
     id: 10,
     lookup: true,
     displayName: "User Group",
-    displayType: "MULTI_LOOKUP",
+    displayType: "SINGLE_LOOKUP",
   },
   features: {
     type: Array,
