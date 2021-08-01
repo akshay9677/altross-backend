@@ -9,8 +9,13 @@ export const JobsSchema = new mongoose.Schema({
     displayType: "TEXT",
   },
   config: { type: Object, index: true },
-  pattern: { type: String, id: 2, displayName: "Pattern", displayType: "TEXT" },
-  name: {
+  executionDate: {
+    type: String,
+    id: 2,
+    displayName: "Execution Date",
+    displayType: "TEXT",
+  },
+  id: {
     type: String,
     required: true,
     id: 1,

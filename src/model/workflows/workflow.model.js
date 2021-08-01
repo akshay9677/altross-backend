@@ -11,14 +11,19 @@ export const WorkflowSchema = new mongoose.Schema({
       value: { type: mongoose.Schema.Types.Mixed, required: true },
     },
   ],
-  matchCondition: { type: String, enum: ["and", "or"], required: true },
+  matchCondition: { type: String, enum: ["and", "or"] },
   event: { type: String, enum: ["create", "update", "delete"] },
   actions: [
     {
       actionType: { type: Number, required: true },
       actionDetails: { type: Object, required: true },
+      scheduleDetails: { type: Object },
+      cancelWorkflow: { type: Object },
     },
   ],
   moduleName: { type: String, required: true },
-  type: { type: String, enum: ["WORKFLOW", "APP_NOTIFICATIONS"] },
+  type: {
+    type: String,
+    enum: ["WORKFLOW", "APP_NOTIFICATIONS", "SCHEDULES", "SCHEDULES_CANCEL"],
+  },
 })

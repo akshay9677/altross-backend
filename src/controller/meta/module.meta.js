@@ -4,7 +4,7 @@ import { MODULES } from "../../utils/moduleSchemas"
 const moduleList = (req, res) => {
   try {
     let moduleList = Object.keys(MODULES)
-      .filter((module) => !MODULES[module].hidden)
+      .filter((module) => !MODULES[module].hidden && module !== "projects")
       .map((module) => MODULES[module])
     return res.status(200).json({
       data: moduleList,

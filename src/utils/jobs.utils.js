@@ -14,3 +14,16 @@ exports.cancelJob = async ({ orgid, name }) => {
     console.log(e)
   }
 }
+
+exports.getDateAfterCount = ({ term, count }) => {
+  let date = new Date()
+  if (term === "YEAR") {
+    return date.setFullYear(date.getFullYear() + count)
+  } else if (term === "MONTH") {
+    return date.setMonth(date.getMonth() + count)
+  } else if (term === "DAY") {
+    return new Date(date.setTime(date.getTime() + count * 24 * 60 * 60 * 1000))
+  } else if (term === "MINUTES") {
+    return new Date(date.getTime() + count * 60000)
+  }
+}

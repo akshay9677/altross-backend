@@ -201,7 +201,7 @@ export const WorkflowExecution = async (
       matchCondition,
       actions,
       event: workflowEvent,
-    } = currRecord || []
+    } = currRecord || {}
     if (workflowEvent === event) {
       let conditionsSatisfiedArray = conditions.map((condition) => {
         let { field, operator, value } = condition || {}
@@ -226,7 +226,11 @@ export const WorkflowExecution = async (
 
       if (isEmpty(conditions)) {
         conditionsSatisfiedArray = [true]
-        matchCondition === "or"
+        matchCondition = "or"
+      }
+
+      if (!isEmpty(conditions) && isEmpty(matchCondition)) {
+        matchCondition = "or"
       }
 
       if (matchCondition === "or") {
