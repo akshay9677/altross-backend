@@ -35,11 +35,11 @@ export const UsersSchema = new mongoose.Schema({
   email: { type: String, id: 5, displayName: "Email", displayType: "TEXT" },
   phone: { type: String, id: 6, displayName: "Phone", displayType: "NUMBER" },
   projects: { type: Array, id: 8, lookup: true },
-  featureGroup: {
+  permissionGroup: {
     type: Array,
     id: 9,
     lookup: true,
-    displayName: "Feature Group",
+    displayName: "Permission Group",
     displayType: "SINGLE_LOOKUP",
   },
   userGroup: {

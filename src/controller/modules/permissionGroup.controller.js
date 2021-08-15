@@ -11,13 +11,13 @@ const LookupHash = {
   userGroup: { ...MODULES.userGroup, preFill: true },
 }
 
-class FeatureGroup extends ModuleBase {
+class PermissionGroup extends ModuleBase {
   constructor() {
     super({
-      model: MODULES["featureGroup"].schema,
-      modelName: MODULES["featureGroup"].name,
+      model: MODULES["permissionGroup"].schema,
+      modelName: MODULES["permissionGroup"].name,
       lookupHash: LookupHash,
-      moduleName: MODULES["featureGroup"].name,
+      moduleName: MODULES["permissionGroup"].name,
     })
   }
   async afterCreateHook({ data, orgid }) {
@@ -28,8 +28,8 @@ class FeatureGroup extends ModuleBase {
     ) {
       let users = []
       let permissions = []
-      let featureGroupId
-      let isFeatureChanged, isUserChanged
+      let permissionGroupId
+      let isPermissionChanged, isUserChanged
       if (!isEmpty(data.userGroup)) {
         let { userGroup } = data || {}
         if (!isEmpty(userGroup)) {
@@ -47,60 +47,60 @@ class FeatureGroup extends ModuleBase {
             users = [...users, ...currUsers]
             if (!isEmpty(users)) isUserChanged = true
           }
-          featureGroupId = data.id
+          permissionGroupId = data.id
         }
       }
       if (!isEmpty(data.users)) {
         users = [...users, ...data.users]
-        featureGroupId = data.id
+        permissionGroupId = data.id
         isUserChanged = true
       }
 
       if (!isEmpty(data.permissions)) {
         permissions = [...permissions, ...data.permissions]
-        isFeatureChanged = true
+        isPermissionChanged = true
       }
 
       if (isEmpty(users) || isEmpty(permissions)) {
-        let { name: featureGroupName, schema: featureGroupSchema } =
-          MODULES["featureGroup"] || {}
-        let featureGroupModel = getModel(
+        let { name: permissionGroupName, schema: permissionGroupSchema } =
+          MODULES["permissionGroup"] || {}
+        let permissionGroupModel = getModel(
           orgid,
-          featureGroupName,
-          featureGroupSchema
+          permissionGroupName,
+          permissionGroupSchema
         )
-        let featureGroupRecord = await featureGroupModel.findOne({
+        let permissionGroupRecord = await permissionGroupModel.findOne({
           id: data.id,
         })
 
         if (isEmpty(users)) {
-          let currUsers = dlv(featureGroupRecord, "users", [])
+          let currUsers = dlv(permissionGroupRecord, "users", [])
           users = [...users, ...currUsers]
         }
 
         if (isEmpty(permissions)) {
-          let currFeatures = dlv(featureGroupRecord, "permissions", [])
-          permissions = [...permissions, ...currFeatures]
+          let currPermissions = dlv(permissionGroupRecord, "permissions", [])
+          permissions = [...permissions, ...currPermissions]
         }
       }
 
       if (!isEmpty(users) && !isEmpty(permissions)) {
-        if (isUserChanged && isFeatureChanged) {
-          this.updateUsersWithFeatures({
+        if (isUserChanged && isPermissionChanged) {
+          this.updateUsersWithPermissions({
             users,
             permissions,
-            featureGroup: featureGroupId,
+            permissionGroup: permissionGroupId,
             orgid,
           })
         } else if (isUserChanged) {
-          this.updateUsersWithFeatures({
+          this.updateUsersWithPermissions({
             users,
             permissions,
-            featureGroup: featureGroupId,
+            permissionGroup: permissionGroupId,
             orgid,
           })
-        } else if (isFeatureChanged) {
-          this.updateFeaturesWithUsers({
+        } else if (isPermissionChanged) {
+          this.updatePermissionsWithUsers({
             users,
             permissions,
             orgid,
@@ -112,10 +112,10 @@ class FeatureGroup extends ModuleBase {
   async afterUpdateHook({ data, orgid, condition }) {
     await this.afterCreateHook({ data: { ...data, ...condition }, orgid })
   }
-  async updateFeaturesWithUsers({ users, permissions, orgid }) {
-    let { name: featuresName, schema: featuresSchema } =
+  async updatePermissionsWithUsers({ users, permissions, orgid }) {
+    let { name: permissionsName, schema: permissionsSchema } =
       MODULES["permissions"] || {}
-    let featuresModel = getModel(orgid, featuresName, featuresSchema)
+    let permissionsModel = getModel(orgid, permissionsName, permissionsSchema)
     let params = {}
 
     if (!isEmpty(users)) params["users"] = users
@@ -123,23 +123,28 @@ class FeatureGroup extends ModuleBase {
     permissions.forEach(async (permission) => {
       await this.updateHandler({
         orgid,
-        currModel: featuresModel,
+        currModel: permissionsModel,
         param: {
           condition: { id: permission },
           data: params,
         },
-        moduleName: featuresName,
+        moduleName: permissionsName,
         executeMiddleWare: true,
       })
     })
   }
-  async updateUsersWithFeatures({ users, permissions, featureGroup, orgid }) {
+  async updateUsersWithPermissions({
+    users,
+    permissions,
+    permissionGroup,
+    orgid,
+  }) {
     let { name: usersName, schema: usersSchema } = MODULES["users"] || {}
     let usersModel = getModel(orgid, usersName, usersSchema)
     let params = {}
 
     if (!isEmpty(permissions)) params["permissions"] = permissions
-    if (!isEmpty(featureGroup)) params["featureGroup"] = [featureGroup]
+    if (!isEmpty(permissionGroup)) params["permissionGroup"] = [permissionGroup]
 
     users.forEach(async (user) => {
       await this.updateHandler({
@@ -156,4 +161,4 @@ class FeatureGroup extends ModuleBase {
   }
 }
 
-export default FeatureGroup
+export default PermissionGroup

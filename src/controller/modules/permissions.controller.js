@@ -6,7 +6,7 @@ import dlv from "dlv"
 
 const LookupHash = {
   projects: { ...MODULES.projects },
-  featureGroup: { ...MODULES.featureGroup, preFill: true },
+  permissionGroup: { ...MODULES.permissionGroup, preFill: true },
   users: { ...MODULES.users, preFill: true },
 }
 
@@ -24,36 +24,41 @@ class Permissions extends ModuleBase {
     return name + permissionId
   }
   async afterCreateHook({ data, orgid }) {
-    if (!isEmpty(data.featureGroup) && !isEmpty(data.id)) {
-      let { featureGroup } = data
+    if (!isEmpty(data.permissionGroup) && !isEmpty(data.id)) {
+      let { permissionGroup } = data
       let users = []
-      for (let featureGroupId of featureGroup) {
-        let { name: featureGroupName, schema: featureGroupSchema } =
-          MODULES["featureGroup"] || {}
-        let featureGroupModel = getModel(
+      for (let permissionGroupId of permissionGroup) {
+        let { name: permissionGroupName, schema: permissionGroupSchema } =
+          MODULES["permissionGroup"] || {}
+        let permissionGroupModel = getModel(
           orgid,
-          featureGroupName,
-          featureGroupSchema
+          permissionGroupName,
+          permissionGroupSchema
         )
-        let featureGroupRecord = await featureGroupModel.findOne({
-          id: featureGroupId,
+        let permissionGroupRecord = await permissionGroupModel.findOne({
+          id: permissionGroupId,
         })
 
-        let currUsers = dlv(featureGroupRecord, "users")
+        let currUsers = dlv(permissionGroupRecord, "users")
         users = [...users, ...currUsers]
       }
 
       if (!isEmpty(users))
-        this.updateFeaturesWithUsers({ users, permissions: [data.id], orgid })
+        this.updatePermissionsWithUsers({
+          users,
+          permissions: [data.id],
+          orgid,
+        })
     }
   }
   async afterUpdateHook({ data, orgid, condition }) {
     await this.afterCreateHook({ data: { ...data, ...condition }, orgid })
   }
-  async updateFeaturesWithUsers({ users, permissions, orgid }) {
-    let { name: featuresName, schema: featuresSchema } =
+
+  async updatePermissionsWithUsers({ users, permissions, orgid }) {
+    let { name: permissionsName, schema: permissionsSchema } =
       MODULES["permissions"] || {}
-    let featuresModel = getModel(orgid, featuresName, featuresSchema)
+    let permissionsModel = getModel(orgid, permissionsName, permissionsSchema)
     let params = {}
 
     if (!isEmpty(users)) params["users"] = users
@@ -61,12 +66,12 @@ class Permissions extends ModuleBase {
     permissions.forEach(async (permission) => {
       await this.updateHandler({
         orgid,
-        currModel: featuresModel,
+        currModel: permissionsModel,
         param: {
           condition: { id: permission },
           data: params,
         },
-        moduleName: featuresName,
+        moduleName: permissionsName,
         executeMiddleWare: true,
       })
     })

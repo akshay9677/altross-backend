@@ -5,7 +5,7 @@ import { ProjectSchema } from "../model/modules/projects.model"
 import { UsersSchema } from "../model/modules/users.model"
 import { PermissionModel } from "../model/modules/permissions.model"
 import { UserFeatureSchema } from "../model/modules/userFeature.model"
-import { FeatureGroupModel } from "../model/modules/featureGroup.model"
+import { PermissionGroupModel } from "../model/modules/permissionGroup.model"
 import { UserGroupModel } from "../model/modules/userGroup.model"
 import { NotificationSchema } from "../model/workflows/notifications.model"
 import { JobsSchema } from "../model/other/jobs.model"
@@ -33,10 +33,10 @@ export const MODULES = {
     displayName: "User Features",
     hidden: true,
   },
-  featureGroup: {
-    name: "featureGroup",
-    schema: FeatureGroupModel,
-    displayName: "Feature Groups",
+  permissionGroup: {
+    name: "permissionGroup",
+    schema: PermissionGroupModel,
+    displayName: "permission Groups",
   },
   userGroup: {
     name: "userGroup",

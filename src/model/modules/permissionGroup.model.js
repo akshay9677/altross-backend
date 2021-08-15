@@ -1,6 +1,6 @@
 import mongoose from "mongoose"
 
-export const FeatureGroupModel = new mongoose.Schema({
+export const PermissionGroupModel = new mongoose.Schema({
   id: {
     type: Number,
     required: true,

@@ -7,7 +7,7 @@ import { isEmpty } from "../../utils/validation"
 const LookupHash = {
   users: { ...MODULES.users, preFill: true },
   projects: { ...MODULES.projects },
-  featureGroup: { ...MODULES.featureGroup, preFill: true },
+  permissionGroup: { ...MODULES.permissionGroup, preFill: true },
 }
 
 class UserGroup extends ModuleBase {
@@ -21,9 +21,9 @@ class UserGroup extends ModuleBase {
   }
   // only one permission group
   async beforeCreateHook({ data }) {
-    if (!isEmpty(data.featureGroup)) {
-      let { featureGroup, adminUsers, users } = data || {}
-      if (featureGroup.length > 1)
+    if (!isEmpty(data.permissionGroup)) {
+      let { permissionGroup, adminUsers, users } = data || {}
+      if (permissionGroup.length > 1)
         throw new Error("A user group can have only one permission group")
 
       let isInvalidUser
@@ -40,22 +40,22 @@ class UserGroup extends ModuleBase {
     let currModel = this.getCurrDBModel(orgid)
     let currUserGroup = await currModel.findOne(condition)
     let {
-      featureGroup,
+      permissionGroup,
       users: currUsers,
       adminUsers: currAdminUsers,
     } = currUserGroup
     if (
-      !isEmpty(data.featureGroup) &&
-      Array.isArray(data.featureGroup) &&
-      data.featureGroup.length > 1
+      !isEmpty(data.permissionGroup) &&
+      Array.isArray(data.permissionGroup) &&
+      data.permissionGroup.length > 1
     ) {
-      throw new Error("A user group can have only one feature group")
+      throw new Error("A user group can have only one permission group")
     } else if (
-      !Array.isArray(data.featureGroup) &&
-      !isEmpty(featureGroup) &&
-      !isEmpty(data.featureGroup)
+      !Array.isArray(data.permissionGroup) &&
+      !isEmpty(permissionGroup) &&
+      !isEmpty(data.permissionGroup)
     ) {
-      throw new Error("A user group can have only one feature group")
+      throw new Error("A user group can have only one permission group")
     }
 
     if (data.adminUsers)
@@ -71,34 +71,34 @@ class UserGroup extends ModuleBase {
       throw new Error("A admin user is not a configured user for this group")
   }
   async afterUpdateHook({ data, orgid, condition }) {
-    if (!isEmpty(data.adminUsers) || !isEmpty(data.featureGroup)) {
-      let users, permissions, featureGroupId
+    if (!isEmpty(data.adminUsers) || !isEmpty(data.permissionGroup)) {
+      let users, permissions, permissionGroupId
       let currModel = this.getCurrDBModel(orgid)
       let currUserGroup = await currModel.findOne(condition)
 
       let adminUsers = dlv(currUserGroup, "adminUsers")
 
       users = adminUsers
-      featureGroupId = dlv(currUserGroup, "featureGroup.0")
+      permissionGroupId = dlv(currUserGroup, "permissionGroup.0")
 
-      let { name: featureGroupName, schema: featureGroupSchema } =
-        MODULES["featureGroup"] || {}
-      let featureGroupModel = getModel(
+      let { name: permissionGroupName, schema: permissionGroupSchema } =
+        MODULES["permissionGroup"] || {}
+      let permissionGroupModel = getModel(
         orgid,
-        featureGroupName,
-        featureGroupSchema
+        permissionGroupName,
+        permissionGroupSchema
       )
-      let featureGroupData = await featureGroupModel.findOne({
-        id: featureGroupId,
+      let permissionGroupData = await permissionGroupModel.findOne({
+        id: permissionGroupId,
       })
 
-      permissions = dlv(featureGroupData, "permissions", [])
+      permissions = dlv(permissionGroupData, "permissions", [])
 
       if (!isEmpty(permissions) && !isEmpty(users))
-        await this.updateUsersWithFeatures({
+        await this.updateUsersWithPermissions({
           users,
           permissions,
-          featureGroup: featureGroupId,
+          permissionGroup: permissionGroupId,
           orgid,
         })
     }
@@ -106,44 +106,49 @@ class UserGroup extends ModuleBase {
   async afterCreateHook({ data, orgid }) {
     if (
       !isEmpty(data) &&
-      !isEmpty(data.featureGroup) &&
+      !isEmpty(data.permissionGroup) &&
       !isEmpty(data.users) &&
       !isEmpty(data.adminUsers)
     ) {
       let adminUsers = dlv(data, "adminUsers")
       let users = adminUsers
 
-      let featureGroupId = dlv(data, "featureGroup.0")
+      let permissionGroupId = dlv(data, "permissionGroup.0")
 
-      let { name: featureGroupName, schema: featureGroupSchema } =
-        MODULES["featureGroup"] || {}
-      let featureGroupModel = getModel(
+      let { name: permissionGroupName, schema: permissionGroupSchema } =
+        MODULES["permissionGroup"] || {}
+      let permissionGroupModel = getModel(
         orgid,
-        featureGroupName,
-        featureGroupSchema
+        permissionGroupName,
+        permissionGroupSchema
       )
-      let featureGroupData = await featureGroupModel.findOne({
-        id: featureGroupId,
+      let permissionGroupData = await permissionGroupModel.findOne({
+        id: permissionGroupId,
       })
 
-      let permissions = dlv(featureGroupData, "permissions")
+      let permissions = dlv(permissionGroupData, "permissions")
 
       if (!isEmpty(permissions))
-        await this.updateUsersWithFeatures({
+        await this.updateUsersWithPermissions({
           users,
           permissions,
           orgid,
-          featureGroup: featureGroupId,
+          permissionGroup: permissionGroupId,
         })
     }
   }
-  async updateUsersWithFeatures({ users, permissions, featureGroup, orgid }) {
+  async updateUsersWithPermissions({
+    users,
+    permissions,
+    permissionGroup,
+    orgid,
+  }) {
     let { name: usersName, schema: usersSchema } = MODULES["users"] || {}
     let usersModel = getModel(orgid, usersName, usersSchema)
     let params = {}
 
     if (!isEmpty(permissions)) params["permissions"] = permissions
-    if (!isEmpty(featureGroup)) params["featureGroup"] = [featureGroup]
+    if (!isEmpty(permissionGroup)) params["permissionGroup"] = [permissionGroup]
 
     users.forEach(async (user) => {
       await this.updateHandler({

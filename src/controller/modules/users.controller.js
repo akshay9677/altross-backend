@@ -8,7 +8,7 @@ import { OPERATOR_HASH } from "../automations/workflows/workflow.execution"
 
 const LookupHash = {
   projects: { ...MODULES.projects },
-  featureGroup: { ...MODULES.featureGroup, preFill: true },
+  permissionGroup: { ...MODULES.permissionGroup, preFill: true },
   userGroup: { ...MODULES.userGroup, preFill: true },
   permissions: { ...MODULES.permissions, preFill: true },
 }
@@ -22,12 +22,12 @@ class Users extends ModuleBase {
       moduleName: MODULES["users"].name,
     })
   }
-  // only one user group and feature group
+  // only one user group and permission group
   beforeCreateHook({ data }) {
-    if (!isEmpty(data.featureGroup)) {
-      let { featureGroup } = data || {}
-      if (featureGroup.length > 1)
-        throw new Error("A user can have only one feature group")
+    if (!isEmpty(data.permissionGroup)) {
+      let { permissionGroup } = data || {}
+      if (permissionGroup.length > 1)
+        throw new Error("A user can have only one permission group")
     }
     if (!isEmpty(data.userGroup)) {
       let { userGroup } = data || {}
@@ -35,22 +35,22 @@ class Users extends ModuleBase {
         throw new Error("A user can have only one user group")
     }
   }
-  // only one user group and feature group
+  // only one user group and permission group
   async beforeUpdateHook({ data, condition, orgid }) {
     let currModel = this.getCurrDBModel(orgid)
     let currUserGroup = await currModel.findOne(condition)
     if (
-      !isEmpty(data.featureGroup) &&
-      Array.isArray(data.featureGroup) &&
-      data.featureGroup.length > 1
+      !isEmpty(data.permissionGroup) &&
+      Array.isArray(data.permissionGroup) &&
+      data.permissionGroup.length > 1
     ) {
-      throw new Error("A user can have only one feature group")
+      throw new Error("A user can have only one permission group")
     } else if (
-      !Array.isArray(data.featureGroup) &&
-      !isEmpty(currUserGroup.featureGroup) &&
-      !isEmpty(data.featureGroup)
+      !Array.isArray(data.permissionGroup) &&
+      !isEmpty(currUserGroup.permissionGroup) &&
+      !isEmpty(data.permissionGroup)
     ) {
-      throw new Error("A user can have only one feature group")
+      throw new Error("A user can have only one permission group")
     }
 
     if (
@@ -68,7 +68,7 @@ class Users extends ModuleBase {
     }
   }
   async afterCreateHook({ data, orgid }) {
-    let featureGroupId
+    let permissionGroupId
     if (!isEmpty(data.userGroup)) {
       let { name: userGroupName, schema: userGroupSchema } =
         MODULES["userGroup"] || {}
@@ -77,37 +77,37 @@ class Users extends ModuleBase {
         id: dlv(data, "userGroup.0"),
       })
 
-      let currFeatureGroup = dlv(userGroupRecord, "featureGroup.0")
+      let currPermissionGroup = dlv(userGroupRecord, "permissionGroup.0")
       let { id } = data
       let adminUsers = dlv(userGroupRecord, "adminUsers")
 
-      if (adminUsers.includes(id)) featureGroupId = currFeatureGroup
+      if (adminUsers.includes(id)) permissionGroupId = currPermissionGroup
     }
 
-    if (isEmpty(featureGroupId) && !isEmpty(data.featureGroup)) {
-      featureGroupId = dlv(data, "featureGroup.0")
+    if (isEmpty(permissionGroupId) && !isEmpty(data.permissionGroup)) {
+      permissionGroupId = dlv(data, "permissionGroup.0")
     }
 
-    if (!isEmpty(featureGroupId) && !isEmpty(data.id)) {
-      let { name: featureGroupName, schema: featureGroupSchema } =
-        MODULES["featureGroup"] || {}
-      let featureGroupModel = getModel(
+    if (!isEmpty(permissionGroupId) && !isEmpty(data.id)) {
+      let { name: permissionGroupName, schema: permissionGroupSchema } =
+        MODULES["permissionGroup"] || {}
+      let permissionGroupModel = getModel(
         orgid,
-        featureGroupName,
-        featureGroupSchema
+        permissionGroupName,
+        permissionGroupSchema
       )
 
-      let featureGroupRecord = await featureGroupModel.findOne({
-        id: featureGroupId,
+      let permissionGroupRecord = await permissionGroupModel.findOne({
+        id: permissionGroupId,
       })
 
-      let permissions = dlv(featureGroupRecord, "permissions")
+      let permissions = dlv(permissionGroupRecord, "permissions")
 
       if (!isEmpty(permissions) && !isEmpty(data.id))
-        this.updateUsersWithFeatures({
+        this.updateUsersWithPermissions({
           users: [data.id],
           permissions,
-          featureGroup: featureGroupId,
+          permissionGroup: permissionGroupId,
           orgid,
         })
     }
@@ -115,13 +115,18 @@ class Users extends ModuleBase {
   async afterUpdateHook({ data, orgid, condition }) {
     await this.afterCreateHook({ data: { ...data, ...condition }, orgid })
   }
-  async updateUsersWithFeatures({ users, permissions, featureGroup, orgid }) {
+  async updateUsersWithPermissions({
+    users,
+    permissions,
+    permissionGroup,
+    orgid,
+  }) {
     let { name: usersName, schema: usersSchema } = MODULES["users"] || {}
     let usersModel = getModel(orgid, usersName, usersSchema)
     let params = {}
 
     if (!isEmpty(permissions)) params["permissions"] = permissions
-    if (!isEmpty(featureGroup)) params["featureGroup"] = [featureGroup]
+    if (!isEmpty(permissionGroup)) params["permissionGroup"] = [permissionGroup]
 
     users.forEach(async (user) => {
       await this.updateHandler({
@@ -142,25 +147,29 @@ class Users extends ModuleBase {
       let { userId, permissionId, resource, actor } = req.body
 
       if (isEmpty(userId)) throw new Error("User Id is required")
-      if (isEmpty(permissionId)) throw new Error("Feature Id is required")
+      if (isEmpty(permissionId)) throw new Error("Permission Id is required")
 
       let currStatus
-      // get feature group from user
+      // get permission group from user
       let currModel = this.getCurrDBModel(orgid)
       let userRecord = await currModel.findOne({ userId })
-      let currFeatureGroup = dlv(userRecord, "featureGroup.0", null)
+      let currPermissionGroup = dlv(userRecord, "permissionGroup.0", null)
       // get conditions from permission record
-      let featuresModel = getModel(
+      let permissionsModel = getModel(
         orgid,
         MODULES["permissions"].name,
         MODULES["permissions"].schema
       )
-      let featureRecord = await featuresModel.findOne({ permissionId })
+      let permissionRecord = await permissionsModel.findOne({ permissionId })
 
-      let { conditions, conditionMatcher, users: featureUsers } = featureRecord
+      let {
+        conditions,
+        conditionMatcher,
+        users: permissionUsers,
+      } = permissionRecord
       let status
 
-      if (this.userFeatureCheck(userRecord, featureRecord)) {
+      if (this.userPermissionCheck(userRecord, permissionRecord)) {
         currStatus = "ACTIVE"
       } else {
         currStatus = "EXPIRED"
@@ -172,12 +181,13 @@ class Users extends ModuleBase {
         !isEmpty(resource)
       ) {
         let conditionsSatisfiedArray = conditions.map((condition) => {
-          let { key, value, operator, dataType, featureGroup, actorKey } =
+          let { key, value, operator, dataType, permissionGroup, actorKey } =
             condition
           let actualValue = resource[key]
           if (
-            isEmpty(featureGroup) ||
-            (!isEmpty(featureGroup) && featureGroup === currFeatureGroup)
+            isEmpty(permissionGroup) ||
+            (!isEmpty(permissionGroup) &&
+              permissionGroup === currPermissionGroup)
           ) {
             if (
               !isEmpty(OPERATOR_HASH[dataType]) &&
@@ -194,7 +204,7 @@ class Users extends ModuleBase {
           } else {
             let { id: currUserId } = userRecord
 
-            if (featureUsers.includes(currUserId)) return true
+            if (permissionUsers.includes(currUserId)) return true
             else return false
           }
         })
@@ -243,7 +253,7 @@ class Users extends ModuleBase {
       return res.status(200).json(errorResponse(error))
     }
   }
-  userFeatureCheck(user, permission) {
+  userPermissionCheck(user, permission) {
     let { permissions } = user || {}
     let { id } = permission
     return (permissions || []).includes(id)

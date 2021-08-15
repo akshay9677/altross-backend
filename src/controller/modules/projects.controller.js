@@ -7,7 +7,7 @@ import { errorResponse } from "../../utils/responsehandler"
 const LookupHash = {
   users: { ...MODULES.users },
   userGroup: { ...MODULES.userGroup },
-  featureGroup: { ...MODULES.featureGroup },
+  permissionGroup: { ...MODULES.permissionGroup },
   permissions: { ...MODULES.permissions },
 }
 
