@@ -6,7 +6,7 @@ import dlv from "dlv"
 
 const LookupHash = {
   users: { ...MODULES.users, preFill: true },
-  features: { ...MODULES.features, preFill: true },
+  permissions: { ...MODULES.permissions, preFill: true },
   projects: { ...MODULES.projects },
   userGroup: { ...MODULES.userGroup, preFill: true },
 }
@@ -24,10 +24,10 @@ class FeatureGroup extends ModuleBase {
     if (
       !isEmpty(data.userGroup) ||
       !isEmpty(data.users) ||
-      !isEmpty(data.features)
+      !isEmpty(data.permissions)
     ) {
       let users = []
-      let features = []
+      let permissions = []
       let featureGroupId
       let isFeatureChanged, isUserChanged
       if (!isEmpty(data.userGroup)) {
@@ -56,12 +56,12 @@ class FeatureGroup extends ModuleBase {
         isUserChanged = true
       }
 
-      if (!isEmpty(data.features)) {
-        features = [...features, ...data.features]
+      if (!isEmpty(data.permissions)) {
+        permissions = [...permissions, ...data.permissions]
         isFeatureChanged = true
       }
 
-      if (isEmpty(users) || isEmpty(features)) {
+      if (isEmpty(users) || isEmpty(permissions)) {
         let { name: featureGroupName, schema: featureGroupSchema } =
           MODULES["featureGroup"] || {}
         let featureGroupModel = getModel(
@@ -78,31 +78,31 @@ class FeatureGroup extends ModuleBase {
           users = [...users, ...currUsers]
         }
 
-        if (isEmpty(features)) {
-          let currFeatures = dlv(featureGroupRecord, "features", [])
-          features = [...features, ...currFeatures]
+        if (isEmpty(permissions)) {
+          let currFeatures = dlv(featureGroupRecord, "permissions", [])
+          permissions = [...permissions, ...currFeatures]
         }
       }
 
-      if (!isEmpty(users) && !isEmpty(features)) {
+      if (!isEmpty(users) && !isEmpty(permissions)) {
         if (isUserChanged && isFeatureChanged) {
           this.updateUsersWithFeatures({
             users,
-            features,
+            permissions,
             featureGroup: featureGroupId,
             orgid,
           })
         } else if (isUserChanged) {
           this.updateUsersWithFeatures({
             users,
-            features,
+            permissions,
             featureGroup: featureGroupId,
             orgid,
           })
         } else if (isFeatureChanged) {
           this.updateFeaturesWithUsers({
             users,
-            features,
+            permissions,
             orgid,
           })
         }
@@ -112,20 +112,20 @@ class FeatureGroup extends ModuleBase {
   async afterUpdateHook({ data, orgid, condition }) {
     await this.afterCreateHook({ data: { ...data, ...condition }, orgid })
   }
-  async updateFeaturesWithUsers({ users, features, orgid }) {
+  async updateFeaturesWithUsers({ users, permissions, orgid }) {
     let { name: featuresName, schema: featuresSchema } =
-      MODULES["features"] || {}
+      MODULES["permissions"] || {}
     let featuresModel = getModel(orgid, featuresName, featuresSchema)
     let params = {}
 
     if (!isEmpty(users)) params["users"] = users
 
-    features.forEach(async (feature) => {
+    permissions.forEach(async (permission) => {
       await this.updateHandler({
         orgid,
         currModel: featuresModel,
         param: {
-          condition: { id: feature },
+          condition: { id: permission },
           data: params,
         },
         moduleName: featuresName,
@@ -133,12 +133,12 @@ class FeatureGroup extends ModuleBase {
       })
     })
   }
-  async updateUsersWithFeatures({ users, features, featureGroup, orgid }) {
+  async updateUsersWithFeatures({ users, permissions, featureGroup, orgid }) {
     let { name: usersName, schema: usersSchema } = MODULES["users"] || {}
     let usersModel = getModel(orgid, usersName, usersSchema)
     let params = {}
 
-    if (!isEmpty(features)) params["features"] = features
+    if (!isEmpty(permissions)) params["permissions"] = permissions
     if (!isEmpty(featureGroup)) params["featureGroup"] = [featureGroup]
 
     users.forEach(async (user) => {

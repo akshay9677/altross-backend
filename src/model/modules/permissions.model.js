@@ -1,6 +1,6 @@
 import mongoose from "mongoose"
 
-export const FeaturesModel = new mongoose.Schema({
+export const PermissionModel = new mongoose.Schema({
   id: {
     type: Number,
     required: true,
@@ -25,12 +25,12 @@ export const FeaturesModel = new mongoose.Schema({
     displayType: "TEXT",
   },
   owner: { type: String, id: 4, displayName: "Owner", displayType: "USER" },
-  featureId: {
+  permissionId: {
     type: String,
     required: true,
     unique: 1,
     id: 5,
-    displayName: "Feature Id",
+    displayName: "Permission Id",
     displayType: "COPY",
   },
   tags: { type: Array, id: 6, displayName: "Tags", displayType: "TAG" },

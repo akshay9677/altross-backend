@@ -11,6 +11,6 @@ export const ProjectSchema = new mongoose.Schema({
   projectId: { type: String, required: true, unique: 1, id: 3 },
   authToken: { type: String, required: true, unique: 1, id: 4 },
   users: { type: Array, id: 6, lookup: true },
-  features: { type: Array, id: 7, lookup: true },
+  permissions: { type: Array, id: 7, lookup: true },
   description: { type: String, id: 8 },
 })

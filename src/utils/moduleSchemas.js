@@ -3,7 +3,7 @@ import { FieldSchema } from "../model/forms/fields.model"
 import { ViewsSchema } from "../model/views/views.model"
 import { ProjectSchema } from "../model/modules/projects.model"
 import { UsersSchema } from "../model/modules/users.model"
-import { FeaturesModel } from "../model/modules/features.model"
+import { PermissionModel } from "../model/modules/permissions.model"
 import { UserFeatureSchema } from "../model/modules/userFeature.model"
 import { FeatureGroupModel } from "../model/modules/featureGroup.model"
 import { UserGroupModel } from "../model/modules/userGroup.model"
@@ -22,10 +22,10 @@ export const MODULES = {
     schema: UsersSchema,
     displayName: "Users",
   },
-  features: {
-    name: "features",
-    schema: FeaturesModel,
-    displayName: "Features",
+  permissions: {
+    name: "permissions",
+    schema: PermissionModel,
+    displayName: "Permissions",
   },
   userFeature: {
     name: "userFeature",

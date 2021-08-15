@@ -10,7 +10,7 @@ import dlv from "dlv"
 
 const LookupHash = {
   users: { ...MODULES.users, preFill: true },
-  features: { ...MODULES.features, preFill: true },
+  permissions: { ...MODULES.permissions, preFill: true },
 }
 
 class UserFeature extends ModuleBase {
@@ -25,14 +25,14 @@ class UserFeature extends ModuleBase {
   async isActive(req, res) {
     try {
       let { orgid } = req.headers
-      let { userId, featureId, resource } = req.body
+      let { userId, permissionId, resource } = req.body
 
       if (isEmpty(userId)) throw new Error("User Id is required")
-      if (isEmpty(featureId)) throw new Error("Feature Id is required")
+      if (isEmpty(permissionId)) throw new Error("Permission Id is required")
 
       let currModel = this.getCurrDBModel(orgid)
 
-      let record = await currModel.findOne({ userId, featureId })
+      let record = await currModel.findOne({ userId, permissionId })
       let { status: currStatus } = record
       // get feature group from user
       let usersModel = getModel(
@@ -45,10 +45,10 @@ class UserFeature extends ModuleBase {
       // get conditions from feature record
       let featuresModel = getModel(
         orgid,
-        MODULES["features"].name,
-        MODULES["features"].schema
+        MODULES["permissions"].name,
+        MODULES["permissions"].schema
       )
-      let featureRecord = await featuresModel.findOne({ featureId })
+      let featureRecord = await featuresModel.findOne({ permissionId })
       if (isEmpty(record))
         throw new Error("No association is found for the given id's")
 
@@ -113,7 +113,7 @@ class UserFeature extends ModuleBase {
         }
 
         if (status !== currStatus)
-          await currModel.findOneAndUpdate({ userId, featureId }, { status })
+          await currModel.findOneAndUpdate({ userId, permissionId }, { status })
       } else {
         let { status: currStatus } = record
 

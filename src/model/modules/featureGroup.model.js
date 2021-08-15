@@ -33,11 +33,11 @@ export const FeatureGroupModel = new mongoose.Schema({
     displayName: "Users",
     displayType: "MULTI_LOOKUP",
   },
-  features: {
+  permissions: {
     type: Array,
     id: 7,
     lookup: true,
-    displayName: "Features",
+    displayName: "Permissions",
     displayType: "MULTI_LOOKUP",
   },
   userGroup: {

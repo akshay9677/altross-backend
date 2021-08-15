@@ -19,11 +19,11 @@ export const UserFeatureSchema = new mongoose.Schema({
     displayName: "Status",
   },
   job: { id: 4, type: mongoose.Schema.Types.Mixed },
-  features: {
+  permissions: {
     type: Array,
     id: 5,
     lookup: true,
-    displayName: "Feature",
+    displayName: "Permissions",
     displayType: "SINGLE_LOOKUP",
   },
   users: {

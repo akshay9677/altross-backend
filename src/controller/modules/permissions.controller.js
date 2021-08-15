@@ -10,18 +10,18 @@ const LookupHash = {
   users: { ...MODULES.users, preFill: true },
 }
 
-class Features extends ModuleBase {
+class Permissions extends ModuleBase {
   constructor() {
     super({
-      model: MODULES["features"].schema,
-      modelName: MODULES["features"].name,
+      model: MODULES["permissions"].schema,
+      modelName: MODULES["permissions"].name,
       lookupHash: LookupHash,
-      moduleName: MODULES["features"].name,
+      moduleName: MODULES["permissions"].name,
     })
   }
   getFieldForId(param) {
-    let { name, featureId } = param
-    return name + featureId
+    let { name, permissionId } = param
+    return name + permissionId
   }
   async afterCreateHook({ data, orgid }) {
     if (!isEmpty(data.featureGroup) && !isEmpty(data.id)) {
@@ -44,26 +44,26 @@ class Features extends ModuleBase {
       }
 
       if (!isEmpty(users))
-        this.updateFeaturesWithUsers({ users, features: [data.id], orgid })
+        this.updateFeaturesWithUsers({ users, permissions: [data.id], orgid })
     }
   }
   async afterUpdateHook({ data, orgid, condition }) {
     await this.afterCreateHook({ data: { ...data, ...condition }, orgid })
   }
-  async updateFeaturesWithUsers({ users, features, orgid }) {
+  async updateFeaturesWithUsers({ users, permissions, orgid }) {
     let { name: featuresName, schema: featuresSchema } =
-      MODULES["features"] || {}
+      MODULES["permissions"] || {}
     let featuresModel = getModel(orgid, featuresName, featuresSchema)
     let params = {}
 
     if (!isEmpty(users)) params["users"] = users
 
-    features.forEach(async (feature) => {
+    permissions.forEach(async (permission) => {
       await this.updateHandler({
         orgid,
         currModel: featuresModel,
         param: {
-          condition: { id: feature },
+          condition: { id: permission },
           data: params,
         },
         moduleName: featuresName,
@@ -73,4 +73,4 @@ class Features extends ModuleBase {
   }
 }
 
-export default Features
+export default Permissions

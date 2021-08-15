@@ -8,7 +8,7 @@ const LookupHash = {
   users: { ...MODULES.users },
   userGroup: { ...MODULES.userGroup },
   featureGroup: { ...MODULES.featureGroup },
-  features: { ...MODULES.features },
+  permissions: { ...MODULES.permissions },
 }
 
 class Projects extends ModuleBase {

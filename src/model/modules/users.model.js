@@ -49,11 +49,11 @@ export const UsersSchema = new mongoose.Schema({
     displayName: "User Group",
     displayType: "SINGLE_LOOKUP",
   },
-  features: {
+  permissions: {
     type: Array,
     id: 11,
     lookup: true,
-    displayName: "Features",
+    displayName: "Permissions",
     displayType: "MULTI_LOOKUP",
   },
 })

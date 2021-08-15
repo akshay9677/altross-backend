@@ -19,12 +19,12 @@ class UserGroup extends ModuleBase {
       moduleName: MODULES["userGroup"].name,
     })
   }
-  // only one feature group
+  // only one permission group
   async beforeCreateHook({ data }) {
     if (!isEmpty(data.featureGroup)) {
       let { featureGroup, adminUsers, users } = data || {}
       if (featureGroup.length > 1)
-        throw new Error("A user group can have only one feature group")
+        throw new Error("A user group can have only one permission group")
 
       let isInvalidUser
       adminUsers.forEach((adminUser) => {
@@ -35,7 +35,7 @@ class UserGroup extends ModuleBase {
         throw new Error("A admin user is not a configured user for this group")
     }
   }
-  // only one feature group
+  // only one permission group
   async beforeUpdateHook({ data, condition, orgid }) {
     let currModel = this.getCurrDBModel(orgid)
     let currUserGroup = await currModel.findOne(condition)
@@ -72,7 +72,7 @@ class UserGroup extends ModuleBase {
   }
   async afterUpdateHook({ data, orgid, condition }) {
     if (!isEmpty(data.adminUsers) || !isEmpty(data.featureGroup)) {
-      let users, features, featureGroupId
+      let users, permissions, featureGroupId
       let currModel = this.getCurrDBModel(orgid)
       let currUserGroup = await currModel.findOne(condition)
 
@@ -92,12 +92,12 @@ class UserGroup extends ModuleBase {
         id: featureGroupId,
       })
 
-      features = dlv(featureGroupData, "features", [])
+      permissions = dlv(featureGroupData, "permissions", [])
 
-      if (!isEmpty(features) && !isEmpty(users))
+      if (!isEmpty(permissions) && !isEmpty(users))
         await this.updateUsersWithFeatures({
           users,
-          features,
+          permissions,
           featureGroup: featureGroupId,
           orgid,
         })
@@ -126,23 +126,23 @@ class UserGroup extends ModuleBase {
         id: featureGroupId,
       })
 
-      let features = dlv(featureGroupData, "features")
+      let permissions = dlv(featureGroupData, "permissions")
 
-      if (!isEmpty(features))
+      if (!isEmpty(permissions))
         await this.updateUsersWithFeatures({
           users,
-          features,
+          permissions,
           orgid,
           featureGroup: featureGroupId,
         })
     }
   }
-  async updateUsersWithFeatures({ users, features, featureGroup, orgid }) {
+  async updateUsersWithFeatures({ users, permissions, featureGroup, orgid }) {
     let { name: usersName, schema: usersSchema } = MODULES["users"] || {}
     let usersModel = getModel(orgid, usersName, usersSchema)
     let params = {}
 
-    if (!isEmpty(features)) params["features"] = features
+    if (!isEmpty(permissions)) params["permissions"] = permissions
     if (!isEmpty(featureGroup)) params["featureGroup"] = [featureGroup]
 
     users.forEach(async (user) => {

@@ -10,7 +10,7 @@ const LookupHash = {
   projects: { ...MODULES.projects },
   featureGroup: { ...MODULES.featureGroup, preFill: true },
   userGroup: { ...MODULES.userGroup, preFill: true },
-  features: { ...MODULES.features, preFill: true },
+  permissions: { ...MODULES.permissions, preFill: true },
 }
 
 class Users extends ModuleBase {
@@ -101,12 +101,12 @@ class Users extends ModuleBase {
         id: featureGroupId,
       })
 
-      let features = dlv(featureGroupRecord, "features")
+      let permissions = dlv(featureGroupRecord, "permissions")
 
-      if (!isEmpty(features) && !isEmpty(data.id))
+      if (!isEmpty(permissions) && !isEmpty(data.id))
         this.updateUsersWithFeatures({
           users: [data.id],
-          features,
+          permissions,
           featureGroup: featureGroupId,
           orgid,
         })
@@ -115,12 +115,12 @@ class Users extends ModuleBase {
   async afterUpdateHook({ data, orgid, condition }) {
     await this.afterCreateHook({ data: { ...data, ...condition }, orgid })
   }
-  async updateUsersWithFeatures({ users, features, featureGroup, orgid }) {
+  async updateUsersWithFeatures({ users, permissions, featureGroup, orgid }) {
     let { name: usersName, schema: usersSchema } = MODULES["users"] || {}
     let usersModel = getModel(orgid, usersName, usersSchema)
     let params = {}
 
-    if (!isEmpty(features)) params["features"] = features
+    if (!isEmpty(permissions)) params["permissions"] = permissions
     if (!isEmpty(featureGroup)) params["featureGroup"] = [featureGroup]
 
     users.forEach(async (user) => {
@@ -139,23 +139,23 @@ class Users extends ModuleBase {
   async isActive(req, res) {
     try {
       let { orgid } = req.headers
-      let { userId, featureId, resource, actor } = req.body
+      let { userId, permissionId, resource, actor } = req.body
 
       if (isEmpty(userId)) throw new Error("User Id is required")
-      if (isEmpty(featureId)) throw new Error("Feature Id is required")
+      if (isEmpty(permissionId)) throw new Error("Feature Id is required")
 
       let currStatus
       // get feature group from user
       let currModel = this.getCurrDBModel(orgid)
       let userRecord = await currModel.findOne({ userId })
       let currFeatureGroup = dlv(userRecord, "featureGroup.0", null)
-      // get conditions from feature record
+      // get conditions from permission record
       let featuresModel = getModel(
         orgid,
-        MODULES["features"].name,
-        MODULES["features"].schema
+        MODULES["permissions"].name,
+        MODULES["permissions"].schema
       )
-      let featureRecord = await featuresModel.findOne({ featureId })
+      let featureRecord = await featuresModel.findOne({ permissionId })
 
       let { conditions, conditionMatcher, users: featureUsers } = featureRecord
       let status
@@ -243,10 +243,10 @@ class Users extends ModuleBase {
       return res.status(200).json(errorResponse(error))
     }
   }
-  userFeatureCheck(user, feature) {
-    let { features } = user || {}
-    let { id } = feature
-    return (features || []).includes(id)
+  userFeatureCheck(user, permission) {
+    let { permissions } = user || {}
+    let { id } = permission
+    return (permissions || []).includes(id)
   }
   isNumeric(str) {
     if (typeof str != "string") return false

@@ -12,7 +12,7 @@ import jobs from "./routes/other/jobs.routes"
 
 import projects from "./routes/modules/projects.routes"
 import users from "./routes/modules/users.routes"
-import features from "./routes/modules/features.routes"
+import permissions from "./routes/modules/permissions.routes"
 import userFeature from "./routes/modules/userFeature.routes"
 import featureGroup from "./routes/modules/featureGroup.routes"
 import userGroup from "./routes/modules/userGroup.routes"
@@ -26,7 +26,7 @@ app.use("/v1", views)
 app.use("/v1", pages)
 app.use("/v1", projects)
 app.use("/v1", users)
-app.use("/v1", features)
+app.use("/v1", permissions)
 app.use("/v1", userFeature)
 app.use("/v1", featureGroup)
 app.use("/v1", userGroup)
