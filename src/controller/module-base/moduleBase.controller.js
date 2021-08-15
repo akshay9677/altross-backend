@@ -5,6 +5,7 @@ import { executeEventMiddleWare } from "../automations/event-middleware/execute.
 import { MODULES } from "../../utils/moduleSchemas"
 import _ from "lodash"
 import dlv from "dlv"
+import { ValidationError } from "../../utils/errors"
 
 class ModuleBase {
   constructor(props) {
@@ -46,6 +47,8 @@ class ModuleBase {
       if (page !== 0) page = page - 1
       else throw new Error("Page number cannot be zero")
 
+      if (isEmpty(perPage)) perPage = 50
+      console.log(perPage)
       if (isEmpty(filter)) {
         records = await currModel
           .find()
@@ -229,7 +232,7 @@ class ModuleBase {
         })
       }
 
-      return res.status(200).json({
+      return res.status(201).json({
         data: record,
         error: null,
       })
@@ -323,6 +326,9 @@ class ModuleBase {
       let param = req.body
       let { id, data } = param
 
+      if (isEmpty(id))
+        throw new ValidationError("Record id is required for updating")
+
       if (!isEmpty(this.beforeUpdateHook)) {
         await this.beforeUpdateHook({ data, orgid, condition: { id } })
       }
@@ -344,7 +350,7 @@ class ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(200).json(errorResponse(error))
+      return res.status(error.status || 200).json(errorResponse(error))
     }
   }
   // Delete Record Handler
@@ -387,14 +393,17 @@ class ModuleBase {
       let currModel = this.getCurrDBModel(orgid)
       let { id } = req.body
 
+      if (isEmpty(id))
+        throw new ValidationError("Record id is required for deleting")
+
       this.deleteHandler({ orgid, currModel, id })
 
-      return res.status(200).json({
+      return res.status(204).json({
         data: "Deleted successfully",
         error: null,
       })
     } catch (error) {
-      return res.status(200).json(errorResponse(error))
+      return res.status(error.status || 200).json(errorResponse(error))
     }
   }
 }
