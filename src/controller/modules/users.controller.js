@@ -5,6 +5,7 @@ import { errorResponse } from "../../utils/responsehandler"
 import dlv from "dlv"
 import { getModel } from "../getModel"
 import { OPERATOR_HASH } from "../automations/workflows/workflow.execution"
+import { NotFoundError, ValidationError } from "../../utils/errors"
 
 const LookupHash = {
   projects: { ...MODULES.projects },
@@ -167,7 +168,7 @@ class Users extends ModuleBase {
         conditions,
         conditionMatcher,
         users: permissionUsers,
-      } = permissionRecord
+      } = permissionRecord || {}
       let status
 
       if (this.userPermissionCheck(userRecord, permissionRecord)) {
@@ -262,12 +263,12 @@ class Users extends ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(200).json(errorResponse(error))
+      return res.status(error.status || 500).json(errorResponse(error))
     }
   }
   userPermissionCheck(user, permission) {
     let { permissions } = user || {}
-    let { id } = permission
+    let { id } = permission || {}
     return (permissions || []).includes(id)
   }
   isNumeric(str) {
@@ -281,6 +282,38 @@ class Users extends ModuleBase {
 
     let newString = firstPart + replaceChar + lastPart
     return newString
+  }
+  async getAllFeatures(req, res) {
+    try {
+      let { orgid } = req.headers
+      let { userId, id } = req.body
+      let param = {}
+
+      if (!isEmpty(userId)) param["userId"] = userId
+      else if (!isEmpty(id)) param["id"] = id
+      else throw new ValidationError("Id or user id is required!")
+
+      let currModel = this.getCurrDBModel(orgid)
+      let userRecord = await currModel.findOne({ userId })
+
+      if (isEmpty(userRecord)) throw new NotFoundError("No record found")
+
+      let { permissions } = userRecord
+
+      let permissionModel = getModel(
+        orgid,
+        MODULES["permissions"].name,
+        MODULES["permissions"].schema
+      )
+      let permissionRecords = await permissionModel.find({ id: permissions })
+
+      return res.status(200).json({
+        data: { permissions: permissionRecords, user: userRecord },
+        error: null,
+      })
+    } catch (error) {
+      return res.status(200).json(errorResponse(error))
+    }
   }
 }
 

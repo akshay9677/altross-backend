@@ -12,5 +12,8 @@ router.route("/create/users").post((...args) => users.createRecord(...args))
 router.route("/update/users").put((...args) => users.updateRecord(...args))
 router.route("/delete/users").delete((...args) => users.deleteRecord(...args))
 router.route("/hasPermission/users").post((...args) => users.isActive(...args))
+router
+  .route("/getPermissions/users")
+  .post((...args) => users.getAllFeatures(...args))
 
 export default router

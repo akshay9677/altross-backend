@@ -19,7 +19,7 @@ app.use(cors())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
-app.use("/api/v1", loginRoute)
+app.use("/v1", loginRoute)
 app.use("", auth, routes)
 
 const port = process.env.PORT || 5000

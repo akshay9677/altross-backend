@@ -20,4 +20,15 @@ class ValidationError extends Error {
     this.status = 400
   }
 }
-export { AuthurizationError, ValidationError }
+class NotFoundError extends Error {
+  constructor(message) {
+    super(message)
+
+    this.name = this.constructor.name
+
+    Error.captureStackTrace(this, this.constructor)
+
+    this.status = 404
+  }
+}
+export { AuthurizationError, ValidationError, NotFoundError }

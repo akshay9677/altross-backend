@@ -90,7 +90,7 @@ class ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(200).json(errorResponse(error))
+      return res.status(error.status || 500).json(errorResponse(error))
     }
   }
 
@@ -148,7 +148,7 @@ class ModuleBase {
         meta,
       })
     } catch (error) {
-      return res.status(200).json(errorResponse(error))
+      return res.status(error.status || 500).json(errorResponse(error))
     }
   }
 
@@ -171,7 +171,7 @@ class ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(200).json(errorResponse(error))
+      return res.status(error.status || 500).json(errorResponse(error))
     }
   }
 
@@ -236,7 +236,7 @@ class ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(200).json(errorResponse(error))
+      return res.status(error.status || 500).json(errorResponse(error))
     }
   }
 
@@ -349,7 +349,7 @@ class ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(error.status || 200).json(errorResponse(error))
+      return res.status(error.status || 500).json(errorResponse(error))
     }
   }
   // Delete Record Handler
@@ -402,7 +402,7 @@ class ModuleBase {
         error: null,
       })
     } catch (error) {
-      return res.status(error.status || 200).json(errorResponse(error))
+      return res.status(error.status || 500).json(errorResponse(error))
     }
   }
 }
