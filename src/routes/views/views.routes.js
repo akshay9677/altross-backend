@@ -5,20 +5,10 @@ const views = new Views()
 
 const router = express.Router()
 
-router
-  .route("/modules/list/views")
-  .post((...args) => views.getModuleList(...args))
-router
-  .route("/modules/record/views")
-  .post((...args) => views.getModuleRecord(...args))
-router
-  .route("/modules/create/views")
-  .post((...args) => views.createRecord(...args))
-router
-  .route("/modules/update/views")
-  .post((...args) => views.updateRecord(...args))
-router
-  .route("/modules/delete/views")
-  .post((...args) => views.deleteRecord(...args))
+router.route("/list/views").post((...args) => views.getModuleList(...args))
+router.route("/record/views").post((...args) => views.getModuleRecord(...args))
+router.route("/create/views").post((...args) => views.createRecord(...args))
+router.route("/update/views").put((...args) => views.updateRecord(...args))
+router.route("/delete/views").delete((...args) => views.deleteRecord(...args))
 
 export default router

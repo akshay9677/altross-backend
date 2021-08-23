@@ -5,6 +5,6 @@ export const ViewsSchema = new mongoose.Schema({
   displayName: { type: String, required: true },
   description: { type: String },
   id: { type: Number, required: true, unique: 1 },
-  fields: { type: Array, id: 4, lookup: true },
+  fields: { type: Array, id: 4 },
   moduleName: { type: String, required: true },
 })

@@ -6,22 +6,22 @@ const notifications = new Notifications()
 const router = express.Router()
 
 router
-  .route("/modules/list/notifications")
+  .route("/list/notifications")
   .post((...args) => notifications.getModuleList(...args))
 router
-  .route("/modules/create/notifications")
+  .route("/create/notifications")
   .post((...args) => notifications.createRecord(...args))
 router
-  .route("/modules/update/notifications")
-  .post((...args) => notifications.updateRecord(...args))
+  .route("/update/notifications")
+  .put((...args) => notifications.updateRecord(...args))
 router
-  .route("/modules/delete/notifications")
-  .post((...args) => notifications.deleteRecord(...args))
+  .route("/delete/notifications")
+  .delete((...args) => notifications.deleteRecord(...args))
 router
-  .route("/modules/seen/notifications")
-  .post((...args) => notifications.seen(...args))
+  .route("/seen/notifications")
+  .put((...args) => notifications.seen(...args))
 router
-  .route("/modules/seencount/notifications")
+  .route("/seencount/notifications")
   .post((...args) => notifications.seenCount(...args))
 
 export default router

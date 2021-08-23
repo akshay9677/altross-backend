@@ -6,16 +6,16 @@ const workflows = new Workflows()
 const router = express.Router()
 
 router
-  .route("/modules/list/workflows")
+  .route("/list/workflows")
   .post((...args) => workflows.getModuleList(...args))
 router
-  .route("/modules/create/workflows")
+  .route("/create/workflows")
   .post((...args) => workflows.createRecord(...args))
 router
-  .route("/modules/update/workflows")
-  .post((...args) => workflows.updateRecord(...args))
+  .route("/update/workflows")
+  .put((...args) => workflows.updateRecord(...args))
 router
-  .route("/modules/delete/workflows")
-  .post((...args) => workflows.deleteRecord(...args))
+  .route("/delete/workflows")
+  .delete((...args) => workflows.deleteRecord(...args))
 
 export default router

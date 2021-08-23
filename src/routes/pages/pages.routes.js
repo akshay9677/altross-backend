@@ -3,6 +3,6 @@ import { pageFactory } from "../../controller/pages/pageFactory"
 
 const router = express.Router()
 
-router.route("/modules/pages").post((...args) => pageFactory(...args))
+router.route("/pages").post((...args) => pageFactory(...args))
 
 export default router

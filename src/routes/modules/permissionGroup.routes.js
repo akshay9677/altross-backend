@@ -6,22 +6,22 @@ const permissionGroup = new PermissionGroup()
 const router = express.Router()
 
 router
-  .route("/modules/list/permissionGroup")
+  .route("/list/permissionGroup")
   .post((...args) => permissionGroup.getModuleList(...args))
 router
-  .route("/modules/record/permissionGroup")
+  .route("/record/permissionGroup")
   .post((...args) => permissionGroup.getModuleRecord(...args))
 router
-  .route("/modules/fields/permissionGroup")
+  .route("/fields/permissionGroup")
   .post((...args) => permissionGroup.getModuleFields(...args))
 router
-  .route("/modules/create/permissionGroup")
+  .route("/create/permissionGroup")
   .post((...args) => permissionGroup.createRecord(...args))
 router
-  .route("/modules/update/permissionGroup")
-  .post((...args) => permissionGroup.updateRecord(...args))
+  .route("/update/permissionGroup")
+  .put((...args) => permissionGroup.updateRecord(...args))
 router
-  .route("/modules/delete/permissionGroup")
-  .post((...args) => permissionGroup.deleteRecord(...args))
+  .route("/delete/permissionGroup")
+  .delete((...args) => permissionGroup.deleteRecord(...args))
 
 export default router

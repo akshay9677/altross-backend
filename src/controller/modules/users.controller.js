@@ -47,6 +47,7 @@ class Users extends ModuleBase {
       throw new Error("A user can have only one permission group")
     } else if (
       !Array.isArray(data.permissionGroup) &&
+      !isEmpty(currUserGroup) &&
       !isEmpty(currUserGroup.permissionGroup) &&
       !isEmpty(data.permissionGroup)
     ) {
@@ -144,7 +145,7 @@ class Users extends ModuleBase {
   async isActive(req, res) {
     try {
       let { orgid } = req.headers
-      let { userId, permissionId, resource, actor } = req.body
+      let { userId, permissionId, resource, targetResource } = req.body
 
       if (isEmpty(userId)) throw new Error("User Id is required")
       if (isEmpty(permissionId)) throw new Error("Permission Id is required")
@@ -181,8 +182,15 @@ class Users extends ModuleBase {
         !isEmpty(resource)
       ) {
         let conditionsSatisfiedArray = conditions.map((condition) => {
-          let { key, value, operator, dataType, permissionGroup, actorKey } =
-            condition
+          let {
+            key,
+            value,
+            operator,
+            dataType,
+            permissionGroup,
+            valueKey,
+            valueType,
+          } = condition
           let actualValue = resource[key]
           if (
             isEmpty(permissionGroup) ||
@@ -194,8 +202,12 @@ class Users extends ModuleBase {
               !isEmpty((OPERATOR_HASH[dataType] || {})[operator])
             ) {
               let selectedOperator = OPERATOR_HASH[dataType][operator]
-              if (!isEmpty(actor) && !isEmpty(actorKey)) {
-                let val = actor[actorKey]
+              if (
+                valueType === "DYNAMIC" &&
+                !isEmpty(targetResource) &&
+                !isEmpty(valueKey)
+              ) {
+                let val = targetResource[valueKey]
                 return selectedOperator.action(actualValue, val)
               } else {
                 return selectedOperator.action(actualValue, value)

@@ -20,7 +20,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use("/api/v1", loginRoute)
-app.use("/api", auth, routes)
+app.use("", auth, routes)
 
 const port = process.env.PORT || 5000
 app.listen(port, () => {

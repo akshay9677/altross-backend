@@ -36,7 +36,21 @@ export const PermissionModel = new mongoose.Schema({
   tags: { type: Array, id: 6, displayName: "Tags", displayType: "TAG" },
   projects: { type: Array, id: 7, lookup: true },
   permissionGroup: { type: Array, id: 8, lookup: true },
-  conditions: { type: Array, id: 9 },
+  conditions: [
+    {
+      dataType: {
+        type: String,
+        required: true,
+        enum: ["String", "Number", "Array", "Boolean"],
+      },
+      key: { type: String, required: true },
+      operator: { type: Number, required: true },
+      value: { type: mongoose.Schema.Types.Mixed },
+      valueKey: { type: String },
+      valueType: { type: String, enum: ["STRICT", "DYNAMIC"], required: true },
+      permissionGroup: { type: Number },
+    },
+  ],
   conditionMatcher: { type: String, id: 10 },
   conditionType: {
     type: String,

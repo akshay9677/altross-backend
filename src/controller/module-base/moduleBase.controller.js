@@ -48,7 +48,6 @@ class ModuleBase {
       else throw new Error("Page number cannot be zero")
 
       if (isEmpty(perPage)) perPage = 50
-      console.log(perPage)
       if (isEmpty(filter)) {
         records = await currModel
           .find()

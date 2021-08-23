@@ -205,20 +205,24 @@ export const WorkflowExecution = async (
     if (workflowEvent === event) {
       let conditionsSatisfiedArray = conditions.map((condition) => {
         let { field, operator, value } = condition || {}
-        let fieldObj = currModuleFields.find(
-          (currField) => currField.path === field
-        )
-        let { instance } = fieldObj
-        let operatorsSelected
+        if (!isEmpty(condition)) {
+          let fieldObj = currModuleFields.find(
+            (currField) => currField.path === field
+          )
+          let { instance } = fieldObj
+          let operatorsSelected
 
-        if (
-          !isEmpty(OPERATOR_HASH[instance]) &&
-          !isEmpty((OPERATOR_HASH[instance] || {})[operator])
-        )
-          operatorsSelected = OPERATOR_HASH[instance][operator]
+          if (
+            !isEmpty(OPERATOR_HASH[instance]) &&
+            !isEmpty((OPERATOR_HASH[instance] || {})[operator])
+          )
+            operatorsSelected = OPERATOR_HASH[instance][operator]
 
-        if (!isEmpty(operatorsSelected)) {
-          return operatorsSelected.action(record[field], value)
+          if (!isEmpty(operatorsSelected)) {
+            return operatorsSelected.action(record[field], value)
+          } else {
+            return false
+          }
         } else {
           return false
         }

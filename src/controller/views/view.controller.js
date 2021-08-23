@@ -10,7 +10,6 @@ class Views extends ModuleBase {
     super({
       model: OTHER_MODULES["views"].schema,
       modelName: OTHER_MODULES["views"].name,
-      lookupHash: null,
       moduleName: OTHER_MODULES["views"].name,
       hideWorkflow: true,
     })
