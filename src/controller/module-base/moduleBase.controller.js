@@ -61,6 +61,11 @@ class ModuleBase {
           .limit(perPage)
           .countDocuments()
       } else {
+        Object.keys(filter).forEach((key) => {
+          if (Array.isArray(filter[key]) && !key.includes("$")) {
+            filter[key] = { $all: filter[key] }
+          }
+        })
         records = await currModel
           .find(filter)
           .sort(sort)
